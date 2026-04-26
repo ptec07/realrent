@@ -8,6 +8,7 @@ from collections.abc import Sequence
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 revision: str = "20260425_0001"
 down_revision: str | Sequence[str] | None = None
@@ -16,14 +17,14 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    housing_type = sa.Enum("apartment", "officetel", name="housing_type")
-    rent_type = sa.Enum("jeonse", "monthly", name="rent_type")
-    sync_status = sa.Enum("pending", "running", "success", "failed", name="sync_status")
+    housing_type = postgresql.ENUM("apartment", "officetel", name="housing_type", create_type=False)
+    rent_type = postgresql.ENUM("jeonse", "monthly", name="rent_type", create_type=False)
+    sync_status = postgresql.ENUM("pending", "running", "success", "failed", name="sync_status", create_type=False)
 
     bind = op.get_bind()
-    housing_type.create(bind, checkfirst=True)
-    rent_type.create(bind, checkfirst=True)
-    sync_status.create(bind, checkfirst=True)
+    postgresql.ENUM("apartment", "officetel", name="housing_type").create(bind, checkfirst=True)
+    postgresql.ENUM("jeonse", "monthly", name="rent_type").create(bind, checkfirst=True)
+    postgresql.ENUM("pending", "running", "success", "failed", name="sync_status").create(bind, checkfirst=True)
 
     op.create_table(
         "regions",
