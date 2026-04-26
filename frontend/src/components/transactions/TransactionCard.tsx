@@ -12,6 +12,14 @@ function formatAddress(transaction: TransactionItem) {
   return [transaction.regionSido, transaction.regionSigungu, transaction.regionDong].filter(Boolean).join(' ')
 }
 
+function formatRentType(rentType: TransactionItem['rentType']) {
+  return rentType === 'jeonse' ? '전세' : '월세'
+}
+
+function formatHousingType(sourceType: TransactionItem['sourceType']) {
+  return sourceType === 'apartment' ? '아파트' : '오피스텔'
+}
+
 export default function TransactionCard({ transaction }: TransactionCardProps) {
   const [isDetailOpen, setIsDetailOpen] = useState(false)
 
@@ -33,9 +41,8 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
           <p>
             지번 {transaction.addressJibun || '-'} · 준공 {transaction.builtYear ?? '-'}년
           </p>
-          <p>
-            거래 유형 {transaction.rentType} · 주거 유형 {transaction.sourceType}
-          </p>
+          <p>거래유형 : {formatRentType(transaction.rentType)}</p>
+          <p>주거유형 : {formatHousingType(transaction.sourceType)}</p>
         </div>
       ) : null}
     </article>
