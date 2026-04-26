@@ -9,6 +9,7 @@ class HousingType(StrEnum):
 class RentType(StrEnum):
     jeonse = "jeonse"
     monthly = "monthly"
+    sale = "sale"
 
 
 class SyncStatus(StrEnum):

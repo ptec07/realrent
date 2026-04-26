@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from app.ingestion.normalizer import normalize_rental_transaction
+from app.ingestion.normalizer import normalize_rental_transaction, normalize_sale_transaction
 from app.models.enums import HousingType, RentType
 
 
@@ -109,3 +109,39 @@ def test_normalize_handles_current_molit_english_xml_tags():
     assert normalized["deposit_amount_manwon"] == 85000
     assert normalized["monthly_rent_manwon"] == 0
     assert normalized["rent_type"] == RentType.jeonse
+
+
+def test_normalize_handles_current_molit_sale_english_xml_tags():
+    row = {
+        "시도": "서울특별시",
+        "sggNm": "강남구",
+        "umdNm": "개포동",
+        "sggCd": "11680",
+        "aptNm": "현대2",
+        "jibun": "654",
+        "excluUseAr": "84.81",
+        "floor": "7",
+        "buildYear": "1986",
+        "dealYear": "2025",
+        "dealMonth": "1",
+        "dealDay": "11",
+        "dealAmount": "215,000",
+    }
+
+    normalized = normalize_sale_transaction(row, source_type=HousingType.apartment)
+
+    assert normalized["source_type"] == HousingType.apartment
+    assert normalized["rent_type"] == RentType.sale
+    assert normalized["region_sigungu"] == "강남구"
+    assert normalized["region_dong"] == "개포동"
+    assert normalized["region_code_5"] == "11680"
+    assert normalized["building_name"] == "현대2"
+    assert normalized["address_jibun"] == "654"
+    assert normalized["area_m2"] == Decimal("84.81")
+    assert normalized["floor"] == 7
+    assert normalized["built_year"] == 1986
+    assert normalized["contract_date"] == date(2025, 1, 11)
+    assert normalized["contract_year_month"] == "2025-01"
+    assert normalized["deposit_amount_manwon"] == 215000
+    assert normalized["monthly_rent_manwon"] == 0
+    assert len(normalized["source_hash"]) == 64

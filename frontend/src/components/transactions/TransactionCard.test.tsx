@@ -33,4 +33,14 @@ describe('TransactionCard', () => {
     expect(screen.getByText('주거유형 : 아파트')).toBeInTheDocument()
     expect(screen.queryByText(/jeonse|apartment/)).not.toBeInTheDocument()
   })
+
+  it('displays sale transactions with sale price labels', () => {
+    render(<TransactionCard transaction={{ ...transaction, rentType: 'sale', depositAmountManwon: 215000 }} />)
+
+    expect(screen.getByText('매매가 21억 5,000만원')).toBeInTheDocument()
+    expect(screen.queryByText(/보증금/)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '개포우성2 거래 상세 열기' }))
+    expect(screen.getByText('거래유형 : 매매')).toBeInTheDocument()
+  })
 })

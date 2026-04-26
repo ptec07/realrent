@@ -1,7 +1,7 @@
 import { apiGet } from './client'
 
 export type HousingType = 'apartment' | 'officetel'
-export type RentType = 'all' | 'jeonse' | 'monthly'
+export type RentType = 'all' | 'jeonse' | 'monthly' | 'sale'
 export type TransactionSort = 'latest' | 'deposit_asc' | 'monthly_rent_asc'
 
 export interface TransactionQueryParams {

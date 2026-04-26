@@ -10,6 +10,8 @@ from app.models.enums import HousingType
 
 APARTMENT_RENT_ENDPOINT_URL = "https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent"
 OFFICETEL_RENT_ENDPOINT_URL = "https://apis.data.go.kr/1613000/RTMSDataSvcOffiRent/getRTMSDataSvcOffiRent"
+APARTMENT_SALE_ENDPOINT_URL = "https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade"
+OFFICETEL_SALE_ENDPOINT_URL = "https://apis.data.go.kr/1613000/RTMSDataSvcOffiTrade/getRTMSDataSvcOffiTrade"
 DEFAULT_TIMEOUT_SECONDS = 10.0
 
 
@@ -19,6 +21,8 @@ class MolitClient:
     http_client: httpx.Client | None = None
     apartment_endpoint_url: str = APARTMENT_RENT_ENDPOINT_URL
     officetel_endpoint_url: str = OFFICETEL_RENT_ENDPOINT_URL
+    apartment_sale_endpoint_url: str = APARTMENT_SALE_ENDPOINT_URL
+    officetel_sale_endpoint_url: str = OFFICETEL_SALE_ENDPOINT_URL
     timeout: float = DEFAULT_TIMEOUT_SECONDS
 
     def fetch_rent_transactions(
@@ -42,11 +46,38 @@ class MolitClient:
             timeout=self.timeout,
         )
 
+    def fetch_sale_transactions(
+        self,
+        *,
+        source_type: HousingType | str,
+        region_code_5: str,
+        contract_year_month: str,
+        page_no: int = 1,
+        num_of_rows: int = 1000,
+    ) -> str:
+        endpoint_url = self._sale_endpoint_for_source_type(source_type)
+        return fetch_rental_transactions_xml(
+            http_client=self._http_client(),
+            endpoint_url=endpoint_url,
+            service_key=self._service_key(),
+            region_code_5=region_code_5,
+            contract_year_month=contract_year_month,
+            page_no=page_no,
+            num_of_rows=num_of_rows,
+            timeout=self.timeout,
+        )
+
     def _endpoint_for_source_type(self, source_type: HousingType | str) -> str:
         normalized_source_type = HousingType(source_type)
         if normalized_source_type == HousingType.apartment:
             return self.apartment_endpoint_url
         return self.officetel_endpoint_url
+
+    def _sale_endpoint_for_source_type(self, source_type: HousingType | str) -> str:
+        normalized_source_type = HousingType(source_type)
+        if normalized_source_type == HousingType.apartment:
+            return self.apartment_sale_endpoint_url
+        return self.officetel_sale_endpoint_url
 
     def _service_key(self) -> str:
         service_key = self.service_key or settings.public_data_service_key

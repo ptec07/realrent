@@ -1,4 +1,5 @@
-from app.ingestion.runner import ingest_rent_transactions
+from app.ingestion.runner import ingest_rent_transactions, ingest_sale_transactions
+from app.models.enums import RentType
 from app.models.monthly_region_summary import MonthlyRegionSummary
 from app.models.region import Region
 from app.models.rental_transaction import RentalTransaction
@@ -11,6 +12,10 @@ class FakeMolitClient:
 
     def fetch_rent_transactions(self, **kwargs):
         self.calls.append(kwargs)
+        return self.xml_text
+
+    def fetch_sale_transactions(self, **kwargs):
+        self.calls.append({"kind": "sale", **kwargs})
         return self.xml_text
 
 
@@ -116,3 +121,54 @@ def test_ingest_rent_transactions_skips_existing_source_hashes(db_session):
     assert second.inserted_count == 0
     assert second.skipped_duplicate_count == 1
     assert db_session.query(RentalTransaction).count() == 1
+
+
+def test_ingest_sale_transactions_fetches_normalizes_and_aggregates(db_session):
+    xml = """
+    <response><body><items>
+      <item>
+        <법정동> 개포동 </법정동>
+        <아파트>매매아파트</아파트>
+        <지번>1-1</지번>
+        <전용면적>84.91</전용면적>
+        <층>7</층>
+        <건축년도>2005</건축년도>
+        <계약년월>202501</계약년월>
+        <계약일>15</계약일>
+        <거래금액>210,000</거래금액>
+      </item>
+    </items></body></response>
+    """
+    client = FakeMolitClient(xml)
+
+    result = ingest_sale_transactions(
+        db_session,
+        client=client,
+        source_type="apartment",
+        region_code_5="11680",
+        contract_year_month="2025-01",
+        region_sido="서울특별시",
+        region_sigungu="강남구",
+    )
+
+    assert client.calls == [
+        {
+            "kind": "sale",
+            "source_type": "apartment",
+            "region_code_5": "11680",
+            "contract_year_month": "2025-01",
+        }
+    ]
+    assert result.fetched_count == 1
+    assert result.inserted_count == 1
+    assert result.skipped_duplicate_count == 0
+    assert result.summary_count == 1
+
+    transaction = db_session.query(RentalTransaction).one()
+    assert transaction.rent_type == RentType.sale
+    assert transaction.deposit_amount_manwon == 210000
+    assert transaction.monthly_rent_manwon == 0
+
+    summary = db_session.query(MonthlyRegionSummary).one()
+    assert summary.rent_type == RentType.sale
+    assert summary.avg_deposit_manwon == 210000

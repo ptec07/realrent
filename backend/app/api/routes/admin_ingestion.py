@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
-from app.ingestion.runner import IngestionResult, ingest_rent_transactions
+from app.ingestion.runner import IngestionResult, ingest_rent_transactions, ingest_sale_transactions
 
 router = APIRouter(prefix="/api/admin", tags=["Admin"])
 
@@ -17,6 +17,7 @@ class AdminIngestRequest(BaseModel):
     month: str
     region_sido: str = Field(alias="regionSido")
     region_sigungu: str = Field(alias="regionSigungu")
+    transaction_kind: str = Field(default="rent", alias="transactionKind")
 
 
 class AdminIngestResponse(BaseModel):
@@ -35,7 +36,8 @@ def ingest_public_data(
     if not settings.ingest_admin_token or admin_token != settings.ingest_admin_token:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin ingestion is disabled or unauthorized")
 
-    result = ingest_rent_transactions(
+    ingest = ingest_sale_transactions if request.transaction_kind == "sale" else ingest_rent_transactions
+    result = ingest(
         db,
         source_type=request.source_type,
         region_code_5=request.region_code_5,

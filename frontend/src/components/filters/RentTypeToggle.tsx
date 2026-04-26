@@ -1,4 +1,4 @@
-export type RentTypeFilter = 'all' | 'jeonse' | 'monthly'
+export type RentTypeFilter = 'all' | 'jeonse' | 'monthly' | 'sale'
 
 interface RentTypeToggleProps {
   value: RentTypeFilter
@@ -9,6 +9,7 @@ const OPTIONS: Array<{ label: string; value: RentTypeFilter }> = [
   { label: '전체', value: 'all' },
   { label: '전세', value: 'jeonse' },
   { label: '월세', value: 'monthly' },
+  { label: '매매', value: 'sale' },
 ]
 
 export default function RentTypeToggle({ value, onChange }: RentTypeToggleProps) {

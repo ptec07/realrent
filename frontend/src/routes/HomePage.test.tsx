@@ -25,6 +25,7 @@ describe('HomePage', () => {
     expect(screen.getByRole('radio', { name: '전체' })).toBeChecked()
     expect(screen.getByRole('radio', { name: '전세' })).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: '월세' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: '매매' })).toBeInTheDocument()
     expect(screen.getByLabelText('보증금 상한')).toBeInTheDocument()
     expect(screen.getByLabelText('월세 상한')).toBeInTheDocument()
   })
@@ -53,6 +54,17 @@ describe('HomePage', () => {
 
     expect(window.location.pathname).toBe('/results')
     expect(window.location.search).toBe('?q=%EA%B0%95%EB%82%A8%EA%B5%AC&sourceType=apartment&rentType=all')
+  })
+
+  it('navigates to results with sale rent type when selected', () => {
+    render(<HomePage />)
+
+    fireEvent.change(screen.getByLabelText('지역명'), { target: { value: '강남구' } })
+    fireEvent.click(screen.getByRole('radio', { name: '매매' }))
+    fireEvent.click(screen.getByRole('button', { name: '검색' }))
+
+    expect(window.location.pathname).toBe('/results')
+    expect(window.location.search).toBe('?q=%EA%B0%95%EB%82%A8%EA%B5%AC&sourceType=apartment&rentType=sale')
   })
 
   it('uses the first matching region when the user submits without clicking a suggestion', async () => {

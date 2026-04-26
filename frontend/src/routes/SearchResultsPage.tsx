@@ -55,6 +55,7 @@ function buildCompareUrl(filters: ResultFilters) {
 
 export default function SearchResultsPage() {
   const filters = useMemo(() => parseFilters(window.location.search), [])
+  const isSale = filters.rentType === 'sale'
   const [status, setStatus] = useState<LoadState>('idle')
   const [summary, setSummary] = useState<SummaryResponse | null>(null)
   const [trends, setTrends] = useState<TrendsResponse | null>(null)
@@ -104,7 +105,9 @@ export default function SearchResultsPage() {
       <section className="results-page">
         <p className="eyebrow">RealRent MVP</p>
         <h1>검색 결과</h1>
-        <p className="lead">{filters.q || filters.regionCode5 || '선택한 지역'}의 전월세 실거래 요약입니다.</p>
+        <p className="lead">
+          {filters.q || filters.regionCode5 || '선택한 지역'}의 {isSale ? '매매' : '전월세'} 실거래 요약입니다.
+        </p>
         {filters.regionCode5 ? (
           <button className="secondary-action" type="button" onClick={handleCompareClick}>
             지역 비교하기
@@ -117,8 +120,8 @@ export default function SearchResultsPage() {
 
         {status === 'success' ? (
           <div className="results-grid">
-            <SummaryCards summary={summary} />
-            <TrendChart points={trends?.points ?? []} />
+            <SummaryCards summary={summary} isSale={isSale} />
+            <TrendChart points={trends?.points ?? []} isSale={isSale} />
             <TransactionList items={transactions?.items ?? []} total={transactions?.total ?? 0} />
           </div>
         ) : null}

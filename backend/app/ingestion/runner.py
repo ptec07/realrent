@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.ingestion.aggregator import aggregate_monthly_region_summaries
 from app.ingestion.molit_client import MolitClient
-from app.ingestion.normalizer import normalize_rental_transaction
+from app.ingestion.normalizer import normalize_rental_transaction, normalize_sale_transaction
 from app.ingestion.xml_parser import parse_public_data_items
 from app.models.region import Region
 from app.models.rental_transaction import RentalTransaction
@@ -52,6 +52,85 @@ def ingest_rent_transactions(
             region_sigungu=region_sigungu,
         )
         normalized = normalize_rental_transaction(enriched_row, source_type=source_type)
+        source_hash = normalized["source_hash"]
+        if source_hash in seen_source_hashes or _source_hash_exists(db, source_hash):
+            skipped_duplicate_count += 1
+            continue
+        seen_source_hashes.add(source_hash)
+        db.add(RentalTransaction(**normalized))
+        _upsert_region(db, normalized)
+        inserted_count += 1
+
+    db.flush()
+    aggregation_result = aggregate_monthly_region_summaries(
+        db,
+        region_code_5=region_code_5,
+        source_type=source_type,
+        month_label=_normalize_summary_month(contract_year_month),
+    )
+    db.commit()
+    return IngestionResult(
+        fetched_count=len(rows),
+        inserted_count=inserted_count,
+        skipped_duplicate_count=skipped_duplicate_count,
+        summary_count=aggregation_result.summary_count,
+    )
+
+
+def ingest_sale_transactions(
+    db: Session,
+    *,
+    source_type: str,
+    region_code_5: str,
+    contract_year_month: str,
+    region_sido: str,
+    region_sigungu: str,
+    client: MolitClient | None = None,
+) -> IngestionResult:
+    """Fetch one region/month from MOLIT and persist normalized sale transactions."""
+
+    molit_client = client or MolitClient()
+    xml_text = molit_client.fetch_sale_transactions(
+        source_type=source_type,
+        region_code_5=region_code_5,
+        contract_year_month=contract_year_month,
+    )
+    return _ingest_rows(
+        db,
+        xml_text=xml_text,
+        source_type=source_type,
+        region_code_5=region_code_5,
+        contract_year_month=contract_year_month,
+        region_sido=region_sido,
+        region_sigungu=region_sigungu,
+        normalize=normalize_sale_transaction,
+    )
+
+
+def _ingest_rows(
+    db: Session,
+    *,
+    xml_text: str,
+    source_type: str,
+    region_code_5: str,
+    contract_year_month: str,
+    region_sido: str,
+    region_sigungu: str,
+    normalize,
+) -> IngestionResult:
+    rows = parse_public_data_items(xml_text)
+
+    inserted_count = 0
+    skipped_duplicate_count = 0
+    seen_source_hashes: set[str] = set()
+    for row in rows:
+        enriched_row = _enrich_public_data_row(
+            row,
+            region_code_5=region_code_5,
+            region_sido=region_sido,
+            region_sigungu=region_sigungu,
+        )
+        normalized = normalize(enriched_row, source_type=source_type)
         source_hash = normalized["source_hash"]
         if source_hash in seen_source_hashes or _source_hash_exists(db, source_hash):
             skipped_duplicate_count += 1

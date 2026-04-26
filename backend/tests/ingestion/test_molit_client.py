@@ -95,3 +95,31 @@ def test_molit_client_uses_configured_service_key_and_source_endpoint():
     assert params["serviceKey"] == "SERVICE_KEY"
     assert params["LAWD_CD"] == "11230"
     assert params["DEAL_YMD"] == "202501"
+
+
+def test_molit_client_uses_sale_endpoint_for_sale_transactions():
+    captured = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["url"] = request.url
+        return httpx.Response(200, text="<sale-items />")
+
+    client = MolitClient(
+        service_key="SERVICE_KEY",
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+        apartment_sale_endpoint_url="https://example.test/apartment-sale",
+        officetel_sale_endpoint_url="https://example.test/officetel-sale",
+    )
+
+    xml = client.fetch_sale_transactions(
+        source_type="apartment",
+        region_code_5="11680",
+        contract_year_month="2025-01",
+    )
+
+    assert xml == "<sale-items />"
+    assert str(captured["url"]).startswith("https://example.test/apartment-sale?")
+    params = dict(captured["url"].params.multi_items())
+    assert params["serviceKey"] == "SERVICE_KEY"
+    assert params["LAWD_CD"] == "11680"
+    assert params["DEAL_YMD"] == "202501"

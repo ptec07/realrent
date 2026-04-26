@@ -39,6 +39,40 @@ def normalize_rental_transaction(row: dict[str, str], *, source_type: HousingTyp
     return normalized
 
 
+def normalize_sale_transaction(row: dict[str, str], *, source_type: HousingType | str) -> dict[str, Any]:
+    """Normalize one MOLIT sale transaction row into RealRent fields.
+
+    Sale rows reuse the existing transaction shape so APIs can expose them via
+    rent_type=sale. The sale price is stored in deposit_amount_manwon and
+    monthly_rent_manwon is always 0.
+    """
+
+    normalized_source_type = HousingType(source_type)
+    contract_year_month_value = _pick_year_month(row)
+    contract_year_month = _parse_year_month(contract_year_month_value)
+
+    normalized = {
+        "source_type": normalized_source_type,
+        "rent_type": RentType.sale,
+        "region_sido": _pick(row, "시도", "지역시도"),
+        "region_sigungu": _pick(row, "시군구", "지역시군구", "sggNm"),
+        "region_dong": _pick_optional(row, "법정동", "동", "umdNm"),
+        "region_code_5": _pick(row, "지역코드", "법정동시군구코드", "LAWD_CD", "sggCd"),
+        "building_name": _pick(row, "아파트", "단지명", "오피스텔", "건물명", "aptNm", "offiNm"),
+        "address_jibun": _pick_optional(row, "지번", "jibun"),
+        "area_m2": Decimal(_pick(row, "전용면적", "전용면적(㎡)", "excluUseAr").replace(",", "")),
+        "floor": _parse_optional_int(_pick_optional(row, "층", "floor")),
+        "built_year": _parse_optional_int(_pick_optional(row, "건축년도", "건축연도", "buildYear")),
+        "contract_date": _parse_contract_date(contract_year_month_value, _pick(row, "계약일", "dealDay")),
+        "contract_year_month": contract_year_month,
+        "deposit_amount_manwon": _parse_int(_pick(row, "거래금액", "매매가", "dealAmount")),
+        "monthly_rent_manwon": 0,
+        "raw_payload": row,
+    }
+    normalized["source_hash"] = _build_source_hash(normalized_source_type, row, transaction_kind="sale")
+    return normalized
+
+
 def _pick(row: dict[str, str], *keys: str) -> str:
     for key in keys:
         value = row.get(key)
@@ -92,10 +126,12 @@ def _parse_contract_date(year_month: str, day: str) -> date:
     return date(int(compact[:4]), int(compact[4:]), int(day.strip()))
 
 
-def _build_source_hash(source_type: HousingType, row: dict[str, str]) -> str:
+def _build_source_hash(source_type: HousingType, row: dict[str, str], *, transaction_kind: str = "rent") -> str:
     payload = {
         "source_type": source_type.value,
         "row": row,
     }
+    if transaction_kind != "rent":
+        payload["transaction_kind"] = transaction_kind
     serialized = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()

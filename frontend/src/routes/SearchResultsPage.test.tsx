@@ -138,6 +138,73 @@ describe('SearchResultsPage', () => {
     })
   })
 
+  it('labels sale result summaries and trends as sale prices', async () => {
+    window.history.pushState(
+      {},
+      '',
+      '/results?regionCode5=11680&q=%EA%B0%95%EB%82%A8%EA%B5%AC&sourceType=apartment&rentType=sale',
+    )
+    mockedGetSummary.mockResolvedValueOnce({
+      regionCode5: '11680',
+      sourceType: 'apartment',
+      rentType: 'sale',
+      months: 12,
+      transactionCount: 5,
+      avgDepositManwon: 215000,
+      avgMonthlyRentManwon: 0,
+      avgAreaM2: '84.81',
+      latestMonth: '2025-01',
+      sampleWarning: null,
+    })
+    mockedGetTrends.mockResolvedValueOnce({
+      regionCode5: '11680',
+      sourceType: 'apartment',
+      rentType: 'sale',
+      months: 12,
+      points: [
+        {
+          month: '2025-01',
+          transactionCount: 5,
+          avgDepositManwon: 215000,
+          avgMonthlyRentManwon: 0,
+          avgAreaM2: '84.81',
+        },
+      ],
+    })
+    mockedGetTransactions.mockResolvedValueOnce({
+      page: 1,
+      pageSize: 20,
+      total: 1,
+      items: [
+        {
+          id: 2,
+          sourceType: 'apartment',
+          rentType: 'sale',
+          regionSido: '서울특별시',
+          regionSigungu: '강남구',
+          regionDong: '개포동',
+          regionCode5: '11680',
+          buildingName: '매매아파트',
+          addressJibun: '1-1',
+          areaM2: '84.81',
+          floor: 7,
+          builtYear: 1988,
+          contractDate: '2025-01-11',
+          contractYearMonth: '2025-01',
+          depositAmountManwon: 215000,
+          monthlyRentManwon: 0,
+        },
+      ],
+    })
+
+    render(<SearchResultsPage />)
+
+    expect(screen.getByText('강남구의 매매 실거래 요약입니다.')).toBeInTheDocument()
+    expect(await screen.findByText('평균 매매가 21억 5,000만원')).toBeInTheDocument()
+    expect(screen.queryByText(/평균 보증금/)).not.toBeInTheDocument()
+    expect(screen.getByText('2025-01: 매매가 21억 5,000만원 · 5건')).toBeInTheDocument()
+  })
+
   it('shows an empty state when region code is missing', () => {
     window.history.pushState({}, '', '/results?q=%EC%84%B1%EC%88%98%EB%8F%99')
 

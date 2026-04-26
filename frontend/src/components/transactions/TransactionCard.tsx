@@ -13,7 +13,9 @@ function formatAddress(transaction: TransactionItem) {
 }
 
 function formatRentType(rentType: TransactionItem['rentType']) {
-  return rentType === 'jeonse' ? '전세' : '월세'
+  if (rentType === 'jeonse') return '전세'
+  if (rentType === 'monthly') return '월세'
+  return '매매'
 }
 
 function formatHousingType(sourceType: TransactionItem['sourceType']) {
@@ -30,7 +32,11 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
         {formatAddress(transaction)} · {formatAreaM2(transaction.areaM2)} · {transaction.floor ?? '-'}층
       </p>
       <p>
-        보증금 {formatManwon(transaction.depositAmountManwon)} / 월세 {formatManwon(transaction.monthlyRentManwon)}
+        {transaction.rentType === 'sale' ? (
+          <>매매가 {formatManwon(transaction.depositAmountManwon)}</>
+        ) : (
+          <>보증금 {formatManwon(transaction.depositAmountManwon)} / 월세 {formatManwon(transaction.monthlyRentManwon)}</>
+        )}
       </p>
       <p className="muted-text">계약일 {transaction.contractDate}</p>
       <button className="secondary-action" type="button" onClick={() => setIsDetailOpen((current) => !current)}>
