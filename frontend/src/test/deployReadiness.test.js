@@ -17,6 +17,19 @@ describe('deployment readiness docs and config', () => {
     expect(packageJson.scripts.build).toContain('cp dist/index.html dist/404.html')
   })
 
+  it('defines Vercel rewrites for known SPA routes and the generic app shell', () => {
+    const vercelConfig = JSON.parse(readRepoFile('frontend/vercel.json'))
+
+    expect(vercelConfig.outputDirectory).toBe('dist')
+    expect(vercelConfig.rewrites).toEqual(
+      expect.arrayContaining([
+        { source: '/results', destination: '/' },
+        { source: '/compare', destination: '/' },
+        { source: '/(.*)', destination: '/index.html' },
+      ]),
+    )
+  })
+
   it('documents local setup and Render/Vercel deployment steps in README', () => {
     const readme = readRepoFile('README.md')
 

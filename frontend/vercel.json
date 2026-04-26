@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/results", "destination": "/" },
+    { "source": "/compare", "destination": "/" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
