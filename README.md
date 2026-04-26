@@ -85,6 +85,22 @@ npm test -- --run
 npm run build
 ```
 
+## Public data ingestion
+
+Set `DATABASE_URL` and `PUBLIC_DATA_SERVICE_KEY` before running ingestion. The CLI fetches one source type, region, and contract month, then stores normalized transactions, upserts searchable region rows, skips duplicate `source_hash` rows, and rebuilds monthly summaries for the imported month.
+
+```bash
+cd backend
+python -m app.ingestion.cli \
+  --source-type apartment \
+  --region-code-5 11680 \
+  --month 2025-01 \
+  --region-sido 서울특별시 \
+  --region-sigungu 강남구
+```
+
+Repeat with `--source-type officetel` when officetel data is needed.
+
 MVP smoke coverage includes:
 
 - region search and filter submission
