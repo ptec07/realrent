@@ -1,4 +1,4 @@
-import { useState, type MouseEvent } from 'react'
+import { useEffect, useRef, useState, type MouseEvent } from 'react'
 
 import type { TransactionItem } from '../../api/transactions'
 import { formatAreaM2 } from '../../utils/formatArea'
@@ -7,6 +7,7 @@ import { navigateTo } from '../../utils/navigation'
 
 interface TransactionCardProps {
   transaction: TransactionItem
+  isFocused?: boolean
 }
 
 function formatAddress(transaction: TransactionItem) {
@@ -27,22 +28,45 @@ function formatHousingType(sourceType: TransactionItem['sourceType']) {
   return sourceType === 'apartment' ? '아파트' : '오피스텔'
 }
 
-export default function TransactionCard({ transaction }: TransactionCardProps) {
+function buildReturnTo() {
+  const returnUrl = new URL(`${window.location.pathname}${window.location.search}`, window.location.origin)
+  returnUrl.searchParams.delete('focusTransactionId')
+  return `${returnUrl.pathname}${returnUrl.search}`
+}
+
+function buildMapUrl(transaction: TransactionItem, fullAddress: string) {
+  const params = new URLSearchParams({
+    address: fullAddress,
+    buildingName: transaction.buildingName,
+    transactionId: String(transaction.id),
+    returnTo: buildReturnTo(),
+  })
+  return `/map?${params.toString()}`
+}
+
+export default function TransactionCard({ transaction, isFocused = false }: TransactionCardProps) {
   const [isDetailOpen, setIsDetailOpen] = useState(false)
+  const cardRef = useRef<HTMLElement>(null)
   const fullAddress = formatFullAddress(transaction)
+  const mapUrl = buildMapUrl(transaction, fullAddress)
+
+  useEffect(() => {
+    if (isFocused) {
+      cardRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    }
+  }, [isFocused])
 
   function handleAddressClick(event: MouseEvent<HTMLAnchorElement>) {
     event.preventDefault()
-    const params = new URLSearchParams({ address: fullAddress, buildingName: transaction.buildingName })
-    navigateTo(`/map?${params.toString()}`)
+    navigateTo(mapUrl)
   }
 
   return (
-    <article className="transaction-card">
+    <article className={`transaction-card${isFocused ? ' focused-transaction-card' : ''}`} data-focused={isFocused ? 'true' : undefined} data-testid={`transaction-card-${transaction.id}`} ref={cardRef}>
       <h3>{transaction.buildingName}</h3>
       <p>
-        <a className="address-link" href={`/map?${new URLSearchParams({ address: fullAddress, buildingName: transaction.buildingName }).toString()}`} onClick={handleAddressClick}>
-          {fullAddress} 지도에서 보기
+        <a className="address-link" href={mapUrl} onClick={handleAddressClick}>
+          {fullAddress}
         </a>{' '}
         · {formatAreaM2(transaction.areaM2)} · {transaction.floor ?? '-'}층
       </p>

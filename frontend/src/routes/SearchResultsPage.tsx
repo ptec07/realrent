@@ -18,6 +18,7 @@ interface ResultFilters {
   rentType?: RentType
   depositMax?: number
   monthlyRentMax?: number
+  focusTransactionId?: string
 }
 
 function optionalNumber(value: string | null) {
@@ -37,6 +38,7 @@ function parseFilters(search: string): ResultFilters {
     rentType: (params.get('rentType') || undefined) as RentType | undefined,
     depositMax: optionalNumber(params.get('depositMax')),
     monthlyRentMax: optionalNumber(params.get('monthlyRentMax')),
+    focusTransactionId: params.get('focusTransactionId') ?? undefined,
   }
 }
 
@@ -143,7 +145,7 @@ export default function SearchResultsPage() {
           <div className="results-grid">
             <SummaryCards summary={summary} isSale={isSale} />
             <TrendChart points={trends?.points ?? []} isSale={isSale} />
-            <TransactionList items={transactions?.items ?? []} total={transactions?.total ?? 0} />
+            <TransactionList items={transactions?.items ?? []} total={transactions?.total ?? 0} focusedTransactionId={filters.focusTransactionId} />
           </div>
         ) : null}
       </section>

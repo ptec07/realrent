@@ -273,6 +273,17 @@ button {
   text-underline-offset: 3px;
 }
 
+.focused-transaction-card {
+  outline: 3px solid #2563eb;
+  outline-offset: 4px;
+}
+
+.map-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
 .map-shell {
   min-height: 100vh;
   display: grid;

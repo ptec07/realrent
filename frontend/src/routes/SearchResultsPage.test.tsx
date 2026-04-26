@@ -109,7 +109,7 @@ describe('SearchResultsPage', () => {
     expect(screen.getByText('2026-03: 보증금 1억 2,000만원 · 월세 70만원 · 4건')).toBeInTheDocument()
 
     expect(screen.getByText('성수리버뷰')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: '서울특별시 성동구 성수동 1-1 지도에서 보기' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '서울특별시 성동구 성수동 1-1' })).toBeInTheDocument()
     expect(screen.getByText('보증금 1억 2,000만원 / 월세 70만원')).toBeInTheDocument()
 
     await waitFor(() => {
@@ -135,6 +135,24 @@ describe('SearchResultsPage', () => {
         pageSize: 100,
         sort: 'latest',
       })
+    })
+  })
+
+  it('centers the focused transaction after returning from the map page', async () => {
+    const scrollIntoView = vi.fn()
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoView
+    window.history.pushState(
+      {},
+      '',
+      '/results?regionCode5=11200&q=%EC%84%B1%EC%88%98%EB%8F%99&sourceType=apartment&rentType=monthly&focusTransactionId=1',
+    )
+
+    render(<SearchResultsPage />)
+
+    const focusedCard = await screen.findByTestId('transaction-card-1')
+    expect(focusedCard).toHaveAttribute('data-focused', 'true')
+    await waitFor(() => {
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'center', behavior: 'smooth' })
     })
   })
 

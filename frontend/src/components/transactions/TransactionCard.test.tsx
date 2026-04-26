@@ -28,14 +28,19 @@ describe('TransactionCard', () => {
     window.history.pushState({}, '', '/')
   })
 
-  it('navigates to the map page when the address is clicked', () => {
+  it('shows only the address text and preserves list context when the address is clicked', () => {
+    window.history.pushState({}, '', '/results?regionCode5=11680&q=%EA%B0%95%EB%82%A8%EA%B5%AC&sourceType=apartment&rentType=sale')
     render(<TransactionCard transaction={transaction} />)
 
-    fireEvent.click(screen.getByRole('link', { name: '서울특별시 강남구 개포동 1-1 지도에서 보기' }))
+    fireEvent.click(screen.getByRole('link', { name: '서울특별시 강남구 개포동 1-1' }))
 
     expect(window.location.pathname).toBe('/map')
-    expect(new URLSearchParams(window.location.search).get('address')).toBe('서울특별시 강남구 개포동 1-1')
-    expect(new URLSearchParams(window.location.search).get('buildingName')).toBe('개포우성2')
+    const params = new URLSearchParams(window.location.search)
+    expect(params.get('address')).toBe('서울특별시 강남구 개포동 1-1')
+    expect(params.get('buildingName')).toBe('개포우성2')
+    expect(params.get('transactionId')).toBe('1')
+    expect(params.get('returnTo')).toBe('/results?regionCode5=11680&q=%EA%B0%95%EB%82%A8%EA%B5%AC&sourceType=apartment&rentType=sale')
+    expect(screen.queryByText(/지도에서 보기/)).not.toBeInTheDocument()
   })
 
   it('displays rent and housing types as Korean labels in transaction details', () => {
