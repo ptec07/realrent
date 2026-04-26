@@ -43,6 +43,7 @@ def ingest_rent_transactions(
 
     inserted_count = 0
     skipped_duplicate_count = 0
+    seen_source_hashes: set[str] = set()
     for row in rows:
         enriched_row = _enrich_public_data_row(
             row,
@@ -51,9 +52,11 @@ def ingest_rent_transactions(
             region_sigungu=region_sigungu,
         )
         normalized = normalize_rental_transaction(enriched_row, source_type=source_type)
-        if _source_hash_exists(db, normalized["source_hash"]):
+        source_hash = normalized["source_hash"]
+        if source_hash in seen_source_hashes or _source_hash_exists(db, source_hash):
             skipped_duplicate_count += 1
             continue
+        seen_source_hashes.add(source_hash)
         db.add(RentalTransaction(**normalized))
         _upsert_region(db, normalized)
         inserted_count += 1
@@ -89,7 +92,8 @@ def _enrich_public_data_row(
 
 
 def _source_hash_exists(db: Session, source_hash: str) -> bool:
-    return db.scalar(select(RentalTransaction.id).where(RentalTransaction.source_hash == source_hash).limit(1)) is not None
+    with db.no_autoflush:
+        return db.scalar(select(RentalTransaction.id).where(RentalTransaction.source_hash == source_hash).limit(1)) is not None
 
 
 def _upsert_region(db: Session, normalized: dict) -> None:
