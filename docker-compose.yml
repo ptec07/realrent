@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: realrent
+      POSTGRES_USER: realrent
+      POSTGRES_PASSWORD: realrent
+    ports:
+      - "5432:5432"
+    volumes:
+      - realrent_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  realrent_postgres_data:
