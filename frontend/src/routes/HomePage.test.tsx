@@ -1,11 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { searchRegions } from '../api/regions'
 import HomePage from './HomePage'
 
 vi.mock('../api/regions', () => ({
   searchRegions: vi.fn(() => new Promise(() => {})),
 }))
+
+const mockedSearchRegions = vi.mocked(searchRegions)
 
 describe('HomePage', () => {
   afterEach(() => {
@@ -50,5 +53,27 @@ describe('HomePage', () => {
 
     expect(window.location.pathname).toBe('/results')
     expect(window.location.search).toBe('?q=%EA%B0%95%EB%82%A8%EA%B5%AC&sourceType=apartment&rentType=all')
+  })
+
+  it('uses the first matching region when the user submits without clicking a suggestion', async () => {
+    mockedSearchRegions.mockResolvedValueOnce({
+      items: [
+        {
+          fullName: '서울특별시 성동구 성수동',
+          sido: '서울특별시',
+          sigungu: '성동구',
+          dong: '성수동',
+          regionCode5: '11200',
+        },
+      ],
+    })
+    render(<HomePage />)
+
+    fireEvent.change(screen.getByLabelText('지역명'), { target: { value: '성수' } })
+    await screen.findByRole('button', { name: '서울특별시 성동구 성수동 선택' })
+    fireEvent.click(screen.getByRole('button', { name: '검색' }))
+
+    expect(window.location.pathname).toBe('/results')
+    expect(window.location.search).toContain('regionCode5=11200')
   })
 })

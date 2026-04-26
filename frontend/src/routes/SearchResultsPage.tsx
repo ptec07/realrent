@@ -6,6 +6,7 @@ import { getTrends, type TrendsResponse } from '../api/trends'
 import TrendChart from '../components/charts/TrendChart'
 import SummaryCards from '../components/summary/SummaryCards'
 import TransactionList from '../components/transactions/TransactionList'
+import { navigateTo } from '../utils/navigation'
 
 type LoadState = 'idle' | 'loading' | 'success' | 'error'
 
@@ -95,7 +96,7 @@ export default function SearchResultsPage() {
   }, [filters])
 
   function handleCompareClick() {
-    window.history.pushState({}, '', buildCompareUrl(filters))
+    navigateTo(buildCompareUrl(filters))
   }
 
   return (

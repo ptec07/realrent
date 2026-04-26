@@ -129,7 +129,7 @@ describe('MVP smoke flow', () => {
   })
 
   it('searches a region, opens transaction detail, and compares with another region', async () => {
-    const { rerender } = render(<App />)
+    render(<App />)
 
     fireEvent.change(screen.getByLabelText('지역명'), { target: { value: '성수' } })
     fireEvent.click(await screen.findByRole('button', { name: '서울특별시 성동구 성수동 선택' }))
@@ -141,15 +141,13 @@ describe('MVP smoke flow', () => {
     expect(window.location.pathname).toBe('/results')
     expect(window.location.search).toContain('regionCode5=11200')
 
-    rerender(<App />)
     expect(await screen.findByText('성수리버뷰')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '성수리버뷰 거래 상세 열기' }))
     expect(screen.getByText('지번 1-1 · 준공 2018년')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: '지역 비교하기' }))
     expect(window.location.pathname).toBe('/compare')
-    rerender(<App />)
-    fireEvent.change(screen.getByLabelText('지역 B 코드'), { target: { value: '11230' } })
+    fireEvent.change(await screen.findByLabelText('지역 B 코드'), { target: { value: '11230' } })
     fireEvent.click(screen.getByRole('button', { name: '비교하기' }))
 
     expect(await screen.findByText('왕십리동은 성수동보다 평균 보증금과 월세가 높습니다.')).toBeInTheDocument()

@@ -5,6 +5,7 @@ import HousingTypeToggle, { type HousingTypeFilter } from '../components/filters
 import RentTypeToggle, { type RentTypeFilter } from '../components/filters/RentTypeToggle'
 import RegionSearchBox from '../components/search/RegionSearchBox'
 import { searchRegions, type RegionItem } from '../api/regions'
+import { navigateTo } from '../utils/navigation'
 
 function buildResultsUrl(params: {
   q: string
@@ -80,15 +81,16 @@ export default function HomePage() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const fallbackRegionCode5 = regionSuggestions[0]?.regionCode5 ?? ''
     const nextUrl = buildResultsUrl({
       q: regionQuery,
       sourceType,
       rentType,
       depositMax,
       monthlyRentMax,
-      regionCode5: selectedRegionCode5,
+      regionCode5: selectedRegionCode5 || fallbackRegionCode5,
     })
-    window.history.pushState({}, '', nextUrl)
+    navigateTo(nextUrl)
   }
 
   return (

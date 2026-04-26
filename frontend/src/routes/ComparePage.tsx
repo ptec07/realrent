@@ -5,6 +5,7 @@ import type { HousingType, RentType } from '../api/transactions'
 import CompareInsightText from '../components/compare/CompareInsightText'
 import CompareRegionPicker from '../components/compare/CompareRegionPicker'
 import CompareSummaryCards from '../components/compare/CompareSummaryCards'
+import { navigateTo } from '../utils/navigation'
 
 type LoadState = 'idle' | 'loading' | 'success' | 'error'
 
@@ -78,7 +79,7 @@ export default function ComparePage() {
       regionA: regionAInput.trim(),
       regionB: regionBInput.trim(),
     }
-    window.history.pushState({}, '', buildCompareUrl(nextFilters))
+    navigateTo(buildCompareUrl(nextFilters))
     setFilters(nextFilters)
   }
 
