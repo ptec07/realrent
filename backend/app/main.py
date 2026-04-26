@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app.api.routes.admin_ingestion import router as admin_ingestion_router
 from app.api.routes.compare import router as compare_router
 from app.api.routes.regions import router as regions_router
 from app.api.routes.summaries import router as summaries_router
@@ -12,6 +13,7 @@ app.include_router(transactions_router)
 app.include_router(summaries_router)
 app.include_router(trends_router)
 app.include_router(compare_router)
+app.include_router(admin_ingestion_router)
 
 
 @app.get("/health")
