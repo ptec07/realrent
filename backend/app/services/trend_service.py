@@ -94,6 +94,10 @@ def _summary_points(
     if latest_month is None:
         return []
     cutoff_month = _subtract_months(latest_month, months - 1)
+    filtered_summaries = [summary for summary in summaries if summary.month_label >= cutoff_month]
+    if rent_type == "all" or rent_type is None:
+        return _combine_summary_points_by_month(filtered_summaries)
+
     return [
         TrendPoint(
             month=summary.month_label,
@@ -102,8 +106,30 @@ def _summary_points(
             avg_monthly_rent_manwon=summary.avg_monthly_rent_manwon,
             avg_area_m2=_quantize_decimal(summary.avg_area_m2),
         )
-        for summary in sorted(summaries, key=lambda item: item.month_label)
-        if summary.month_label >= cutoff_month
+        for summary in sorted(filtered_summaries, key=lambda item: item.month_label)
+    ]
+
+
+def _combine_summary_points_by_month(summaries: list[MonthlyRegionSummary]) -> list[TrendPoint]:
+    grouped: dict[str, list[MonthlyRegionSummary]] = defaultdict(list)
+    for summary in summaries:
+        grouped[summary.month_label].append(summary)
+
+    return [
+        TrendPoint(
+            month=month,
+            transaction_count=sum(summary.transaction_count for summary in month_summaries),
+            avg_deposit_manwon=_weighted_average_int(
+                (summary.avg_deposit_manwon, summary.transaction_count) for summary in month_summaries
+            ),
+            avg_monthly_rent_manwon=_weighted_average_int(
+                (summary.avg_monthly_rent_manwon, summary.transaction_count) for summary in month_summaries
+            ),
+            avg_area_m2=_weighted_average_decimal(
+                (summary.avg_area_m2, summary.transaction_count) for summary in month_summaries
+            ),
+        )
+        for month, month_summaries in sorted(grouped.items())
     ]
 
 
@@ -152,6 +178,24 @@ def _average_int(values: Iterable[int]) -> int:
 def _average_decimal(values: Iterable[Decimal]) -> Decimal:
     decimals = [Decimal(value) for value in values]
     return _quantize_decimal(sum(decimals) / len(decimals))
+
+
+def _weighted_average_int(values_with_weights: Iterable[tuple[int | None, int]]) -> int | None:
+    weighted_values = [(Decimal(value), weight) for value, weight in values_with_weights if value is not None and weight > 0]
+    total_weight = sum(weight for _, weight in weighted_values)
+    if total_weight == 0:
+        return None
+    total = sum(value * weight for value, weight in weighted_values)
+    return int((total / total_weight).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+
+def _weighted_average_decimal(values_with_weights: Iterable[tuple[Decimal | None, int]]) -> Decimal | None:
+    weighted_values = [(Decimal(value), weight) for value, weight in values_with_weights if value is not None and weight > 0]
+    total_weight = sum(weight for _, weight in weighted_values)
+    if total_weight == 0:
+        return None
+    total = sum(value * weight for value, weight in weighted_values)
+    return _quantize_decimal(total / total_weight)
 
 
 def _quantize_decimal(value: Decimal | None) -> Decimal | None:

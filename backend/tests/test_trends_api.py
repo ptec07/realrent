@@ -124,6 +124,44 @@ def test_trends_api_falls_back_to_live_transaction_aggregation(client, db_sessio
     ]
 
 
+def test_trends_api_combines_summary_rows_when_rent_type_is_all(client, db_session):
+    add_monthly_summary(
+        db_session,
+        month_label="2026-03",
+        rent_type=RentType.jeonse,
+        transaction_count=2,
+        avg_deposit_manwon=50000,
+        avg_monthly_rent_manwon=0,
+        avg_area_m2=Decimal("80.00"),
+    )
+    add_monthly_summary(
+        db_session,
+        month_label="2026-03",
+        rent_type=RentType.monthly,
+        transaction_count=3,
+        avg_deposit_manwon=10000,
+        avg_monthly_rent_manwon=100,
+        avg_area_m2=Decimal("60.00"),
+    )
+    db_session.commit()
+
+    response = client.get(
+        "/api/trends",
+        params={"regionCode5": "11200", "sourceType": "apartment", "rentType": "all", "months": 12},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["points"] == [
+        {
+            "month": "2026-03",
+            "transactionCount": 5,
+            "avgDepositManwon": 26000,
+            "avgMonthlyRentManwon": 60,
+            "avgAreaM2": "68.00",
+        }
+    ]
+
+
 def test_trends_api_empty_result_returns_empty_points(client):
     response = client.get(
         "/api/trends",
