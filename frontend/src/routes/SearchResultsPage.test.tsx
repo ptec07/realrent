@@ -109,7 +109,7 @@ describe('SearchResultsPage', () => {
     expect(screen.getByText('2026-03: 보증금 1억 2,000만원 · 월세 70만원 · 4건')).toBeInTheDocument()
 
     expect(screen.getByText('성수리버뷰')).toBeInTheDocument()
-    expect(screen.getByText('서울특별시 성동구 성수동 · 59.50㎡ · 12층')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '서울특별시 성동구 성수동 1-1 지도에서 보기' })).toBeInTheDocument()
     expect(screen.getByText('보증금 1억 2,000만원 / 월세 70만원')).toBeInTheDocument()
 
     await waitFor(() => {

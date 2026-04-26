@@ -265,6 +265,47 @@ button {
   font-weight: 700;
 }
 
+.address-link,
+.secondary-link {
+  color: #1d4ed8;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.map-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: start center;
+  padding: 32px 16px;
+}
+
+.map-panel {
+  width: min(980px, 100%);
+  border-radius: 28px;
+  background: white;
+  box-shadow: 0 24px 80px rgb(23 32 51 / 10%);
+  display: grid;
+  gap: 18px;
+  padding: 32px;
+}
+
+.map-panel h2 {
+  margin: 0;
+}
+
+.map-address {
+  margin: 0;
+}
+
+.map-frame {
+  width: 100%;
+  min-height: 520px;
+  border: 0;
+  border-radius: 22px;
+  background: #edf2ff;
+}
+
 @media (max-width: 640px) {
   .app-shell {
     align-items: start;

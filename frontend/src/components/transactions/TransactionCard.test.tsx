@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 
 import type { TransactionItem } from '../../api/transactions'
 import TransactionCard from './TransactionCard'
@@ -24,6 +24,20 @@ const transaction: TransactionItem = {
 }
 
 describe('TransactionCard', () => {
+  afterEach(() => {
+    window.history.pushState({}, '', '/')
+  })
+
+  it('navigates to the map page when the address is clicked', () => {
+    render(<TransactionCard transaction={transaction} />)
+
+    fireEvent.click(screen.getByRole('link', { name: '서울특별시 강남구 개포동 1-1 지도에서 보기' }))
+
+    expect(window.location.pathname).toBe('/map')
+    expect(new URLSearchParams(window.location.search).get('address')).toBe('서울특별시 강남구 개포동 1-1')
+    expect(new URLSearchParams(window.location.search).get('buildingName')).toBe('개포우성2')
+  })
+
   it('displays rent and housing types as Korean labels in transaction details', () => {
     render(<TransactionCard transaction={transaction} />)
 

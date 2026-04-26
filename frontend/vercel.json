@@ -4,6 +4,7 @@
   "rewrites": [
     { "source": "/results", "destination": "/" },
     { "source": "/compare", "destination": "/" },
+    { "source": "/map", "destination": "/" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

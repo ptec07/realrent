@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 import HomePage from './routes/HomePage'
 import ComparePage from './routes/ComparePage'
+import MapPage from './routes/MapPage'
 import SearchResultsPage from './routes/SearchResultsPage'
 import { REALRENT_NAVIGATION_EVENT } from './utils/navigation'
 
@@ -23,6 +24,10 @@ export default function App() {
 
   if (pathname === '/compare') {
     return <ComparePage />
+  }
+
+  if (pathname === '/map') {
+    return <MapPage />
   }
 
   if (pathname === '/results') {
