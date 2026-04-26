@@ -132,9 +132,75 @@ describe('SearchResultsPage', () => {
         depositMax: 12000,
         monthlyRentMax: 70,
         page: 1,
-        pageSize: 20,
+        pageSize: 100,
         sort: 'latest',
       })
+    })
+  })
+
+  it('loads every transaction page when the API total is larger than one page', async () => {
+    mockedGetTransactions.mockResolvedValueOnce({
+      page: 1,
+      pageSize: 100,
+      total: 101,
+      items: Array.from({ length: 100 }, (_, index) => ({
+        id: index + 1,
+        sourceType: 'apartment',
+        rentType: 'monthly',
+        regionSido: '서울특별시',
+        regionSigungu: '성동구',
+        regionDong: '성수동',
+        regionCode5: '11200',
+        buildingName: `성수리버뷰${index + 1}`,
+        addressJibun: `${index + 1}`,
+        areaM2: '59.50',
+        floor: 12,
+        builtYear: 2018,
+        contractDate: '2026-03-15',
+        contractYearMonth: '2026-03',
+        depositAmountManwon: 12000,
+        monthlyRentManwon: 70,
+      })),
+    })
+    mockedGetTransactions.mockResolvedValueOnce({
+      page: 2,
+      pageSize: 100,
+      total: 101,
+      items: [
+        {
+          id: 101,
+          sourceType: 'apartment',
+          rentType: 'monthly',
+          regionSido: '서울특별시',
+          regionSigungu: '성동구',
+          regionDong: '성수동',
+          regionCode5: '11200',
+          buildingName: '성수리버뷰101',
+          addressJibun: '101',
+          areaM2: '59.50',
+          floor: 12,
+          builtYear: 2018,
+          contractDate: '2026-03-15',
+          contractYearMonth: '2026-03',
+          depositAmountManwon: 12000,
+          monthlyRentManwon: 70,
+        },
+      ],
+    })
+
+    render(<SearchResultsPage />)
+
+    expect(await screen.findByText('총 101건')).toBeInTheDocument()
+    expect(screen.getByText('성수리버뷰1')).toBeInTheDocument()
+    expect(screen.getByText('성수리버뷰101')).toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(mockedGetTransactions).toHaveBeenCalledWith(
+        expect.objectContaining({ page: 1, pageSize: 100, sort: 'latest' }),
+      )
+      expect(mockedGetTransactions).toHaveBeenCalledWith(
+        expect.objectContaining({ page: 2, pageSize: 100, sort: 'latest' }),
+      )
     })
   })
 

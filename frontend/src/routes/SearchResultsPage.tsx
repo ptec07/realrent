@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import { getSummary, type SummaryResponse } from '../api/summaries'
-import { getTransactions, type HousingType, type RentType, type TransactionListResponse } from '../api/transactions'
+import { getTransactions, type HousingType, type RentType, type TransactionListResponse, type TransactionQueryParams } from '../api/transactions'
 import { getTrends, type TrendsResponse } from '../api/trends'
 import TrendChart from '../components/charts/TrendChart'
 import SummaryCards from '../components/summary/SummaryCards'
@@ -9,6 +9,7 @@ import TransactionList from '../components/transactions/TransactionList'
 import { navigateTo } from '../utils/navigation'
 
 type LoadState = 'idle' | 'loading' | 'success' | 'error'
+const TRANSACTION_PAGE_SIZE = 100
 
 interface ResultFilters {
   regionCode5: string
@@ -36,6 +37,26 @@ function parseFilters(search: string): ResultFilters {
     rentType: (params.get('rentType') || undefined) as RentType | undefined,
     depositMax: optionalNumber(params.get('depositMax')),
     monthlyRentMax: optionalNumber(params.get('monthlyRentMax')),
+  }
+}
+
+async function getAllTransactions(params: TransactionQueryParams): Promise<TransactionListResponse> {
+  const firstPage = await getTransactions({ ...params, page: 1, pageSize: TRANSACTION_PAGE_SIZE })
+  const totalPages = Math.ceil(firstPage.total / TRANSACTION_PAGE_SIZE)
+
+  if (totalPages <= 1) {
+    return firstPage
+  }
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, index) =>
+      getTransactions({ ...params, page: index + 2, pageSize: TRANSACTION_PAGE_SIZE }),
+    ),
+  )
+
+  return {
+    ...firstPage,
+    items: [firstPage.items, ...remainingPages.map((page) => page.items)].flat(),
   }
 }
 
@@ -79,12 +100,12 @@ export default function SearchResultsPage() {
       depositMax: filters.depositMax,
       monthlyRentMax: filters.monthlyRentMax,
       page: 1,
-      pageSize: 20,
+      pageSize: TRANSACTION_PAGE_SIZE,
       sort: 'latest' as const,
     }
 
     setStatus('loading')
-    Promise.all([getSummary(commonParams), getTrends(commonParams), getTransactions(transactionParams)])
+    Promise.all([getSummary(commonParams), getTrends(commonParams), getAllTransactions(transactionParams)])
       .then(([summaryResponse, trendsResponse, transactionsResponse]) => {
         setSummary(summaryResponse)
         setTrends(trendsResponse)
