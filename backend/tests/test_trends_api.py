@@ -162,6 +162,60 @@ def test_trends_api_combines_summary_rows_when_rent_type_is_all(client, db_sessi
     ]
 
 
+def test_trends_api_filters_by_exact_dong_and_uses_live_transactions(client, db_session):
+    add_monthly_summary(
+        db_session,
+        region_sido="경기도",
+        region_sigungu="남양주시",
+        region_dong="다산동",
+        region_code_5="41360",
+        rent_type=RentType.sale,
+        transaction_count=10,
+        avg_deposit_manwon=90000,
+        avg_monthly_rent_manwon=0,
+        avg_area_m2=Decimal("84.00"),
+    )
+    add_transaction(
+        db_session,
+        region_sido="경기도",
+        region_sigungu="남양주시",
+        region_dong="별내면",
+        region_code_5="41360",
+        rent_type=RentType.sale,
+        deposit_amount_manwon=40000,
+        monthly_rent_manwon=0,
+        source_hash="byeollae",
+    )
+    add_transaction(
+        db_session,
+        region_sido="경기도",
+        region_sigungu="남양주시",
+        region_dong="오남읍",
+        region_code_5="41360",
+        rent_type=RentType.sale,
+        deposit_amount_manwon=70000,
+        monthly_rent_manwon=0,
+        source_hash="onam",
+    )
+    db_session.commit()
+
+    response = client.get(
+        "/api/trends",
+        params={"regionCode5": "41360", "dong": "별내면", "sourceType": "apartment", "rentType": "sale"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["points"] == [
+        {
+            "month": "2026-03",
+            "transactionCount": 1,
+            "avgDepositManwon": 40000,
+            "avgMonthlyRentManwon": 0,
+            "avgAreaM2": "60.00",
+        }
+    ]
+
+
 def test_trends_api_empty_result_returns_empty_points(client):
     response = client.get(
         "/api/trends",

@@ -97,6 +97,42 @@ def test_summary_api_limits_to_recent_month_window(client, db_session):
     assert payload["latestMonth"] == "2026-03"
 
 
+def test_summary_api_filters_by_exact_dong_within_same_sigungu(client, db_session):
+    add_transaction(
+        db_session,
+        region_sido="경기도",
+        region_sigungu="남양주시",
+        region_dong="별내면",
+        region_code_5="41360",
+        deposit_amount_manwon=40000,
+        monthly_rent_manwon=0,
+        rent_type=RentType.sale,
+        source_hash="byeollae",
+    )
+    add_transaction(
+        db_session,
+        region_sido="경기도",
+        region_sigungu="남양주시",
+        region_dong="다산동",
+        region_code_5="41360",
+        deposit_amount_manwon=90000,
+        monthly_rent_manwon=0,
+        rent_type=RentType.sale,
+        source_hash="dasan",
+    )
+    db_session.commit()
+
+    response = client.get(
+        "/api/summary",
+        params={"regionCode5": "41360", "dong": "별내면", "sourceType": "apartment", "rentType": "sale"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["transactionCount"] == 1
+    assert payload["avgDepositManwon"] == 40000
+
+
 def test_summary_api_empty_result_returns_null_averages(client):
     response = client.get(
         "/api/summary",

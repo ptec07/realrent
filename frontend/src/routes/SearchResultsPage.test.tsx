@@ -115,18 +115,21 @@ describe('SearchResultsPage', () => {
     await waitFor(() => {
       expect(mockedGetSummary).toHaveBeenCalledWith({
         regionCode5: '11200',
+        dong: undefined,
         sourceType: 'apartment',
         rentType: 'monthly',
         months: 12,
       })
       expect(mockedGetTrends).toHaveBeenCalledWith({
         regionCode5: '11200',
+        dong: undefined,
         sourceType: 'apartment',
         rentType: 'monthly',
         months: 12,
       })
       expect(mockedGetTransactions).toHaveBeenCalledWith({
         regionCode5: '11200',
+        dong: undefined,
         sourceType: 'apartment',
         rentType: 'monthly',
         depositMax: 12000,
@@ -135,6 +138,22 @@ describe('SearchResultsPage', () => {
         pageSize: 100,
         sort: 'latest',
       })
+    })
+  })
+
+  it('passes the selected dong to every results API request', async () => {
+    window.history.pushState(
+      {},
+      '',
+      '/results?regionCode5=41360&q=%EB%B3%84%EB%82%B4%EB%A9%B4&dong=%EB%B3%84%EB%82%B4%EB%A9%B4&sourceType=apartment&rentType=sale',
+    )
+
+    render(<SearchResultsPage />)
+
+    await waitFor(() => {
+      expect(mockedGetSummary).toHaveBeenCalledWith(expect.objectContaining({ regionCode5: '41360', dong: '별내면' }))
+      expect(mockedGetTrends).toHaveBeenCalledWith(expect.objectContaining({ regionCode5: '41360', dong: '별내면' }))
+      expect(mockedGetTransactions).toHaveBeenCalledWith(expect.objectContaining({ regionCode5: '41360', dong: '별내면' }))
     })
   })
 

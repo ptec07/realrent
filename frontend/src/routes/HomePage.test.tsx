@@ -87,5 +87,29 @@ describe('HomePage', () => {
 
     expect(window.location.pathname).toBe('/results')
     expect(window.location.search).toContain('regionCode5=11200')
+    expect(window.location.search).toContain('dong=%EC%84%B1%EC%88%98%EB%8F%99')
+  })
+
+  it('includes the selected 읍면동 so results do not include other dongs in the same sigungu', async () => {
+    mockedSearchRegions.mockResolvedValueOnce({
+      items: [
+        {
+          fullName: '경기도 남양주시 별내면',
+          sido: '경기도',
+          sigungu: '남양주시',
+          dong: '별내면',
+          regionCode5: '41360',
+        },
+      ],
+    })
+    render(<HomePage />)
+
+    fireEvent.change(screen.getByLabelText('지역명'), { target: { value: '별내면' } })
+    fireEvent.click(await screen.findByRole('button', { name: '경기도 남양주시 별내면 선택' }))
+    fireEvent.click(screen.getByRole('button', { name: '검색' }))
+
+    expect(window.location.pathname).toBe('/results')
+    expect(window.location.search).toContain('regionCode5=41360')
+    expect(window.location.search).toContain('dong=%EB%B3%84%EB%82%B4%EB%A9%B4')
   })
 })

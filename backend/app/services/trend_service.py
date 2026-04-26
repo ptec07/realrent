@@ -37,6 +37,7 @@ def get_region_trend(
     db: Session,
     *,
     region_code_5: str,
+    dong: str | None = None,
     source_type: HousingType | str | None = None,
     rent_type: TrendRentType | str | None = None,
     months: int = 12,
@@ -48,19 +49,22 @@ def get_region_trend(
     else:
         normalized_rent_type = RentType(rent_type)
 
-    summary_points = _summary_points(
-        db,
-        region_code_5=region_code_5,
-        source_type=normalized_source_type,
-        rent_type=normalized_rent_type,
-        months=months,
-    )
+    summary_points = []
+    if not dong:
+        summary_points = _summary_points(
+            db,
+            region_code_5=region_code_5,
+            source_type=normalized_source_type,
+            rent_type=normalized_rent_type,
+            months=months,
+        )
     if summary_points:
         points = summary_points
     else:
         points = _live_transaction_points(
             db,
             region_code_5=region_code_5,
+            dong=dong,
             source_type=normalized_source_type,
             rent_type=normalized_rent_type,
             months=months,
@@ -137,11 +141,14 @@ def _live_transaction_points(
     db: Session,
     *,
     region_code_5: str,
+    dong: str | None,
     source_type: HousingType | None,
     rent_type: TrendRentType | None,
     months: int,
 ) -> list[TrendPoint]:
     statement = select(RentalTransaction).where(RentalTransaction.region_code_5 == region_code_5)
+    if dong:
+        statement = statement.where(RentalTransaction.region_dong == dong.strip())
     if source_type:
         statement = statement.where(RentalTransaction.source_type == source_type)
     if rent_type and rent_type != "all":

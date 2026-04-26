@@ -33,6 +33,7 @@ def get_region_summary(
     db: Session,
     *,
     region_code_5: str,
+    dong: str | None = None,
     source_type: HousingType | str | None = None,
     rent_type: SummaryRentType | str | None = None,
     months: int = 12,
@@ -45,6 +46,8 @@ def get_region_summary(
         normalized_rent_type = RentType(rent_type)
 
     statement = select(RentalTransaction).where(RentalTransaction.region_code_5 == region_code_5)
+    if dong:
+        statement = statement.where(RentalTransaction.region_dong == dong.strip())
     if normalized_source_type:
         statement = statement.where(RentalTransaction.source_type == normalized_source_type)
     if normalized_rent_type and normalized_rent_type != "all":

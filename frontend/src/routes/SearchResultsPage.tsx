@@ -14,6 +14,7 @@ const TRANSACTION_PAGE_SIZE = 100
 interface ResultFilters {
   regionCode5: string
   q: string
+  dong?: string
   sourceType?: HousingType
   rentType?: RentType
   depositMax?: number
@@ -34,6 +35,7 @@ function parseFilters(search: string): ResultFilters {
   return {
     regionCode5: params.get('regionCode5') ?? '',
     q: params.get('q') ?? '',
+    dong: params.get('dong') ?? undefined,
     sourceType: (params.get('sourceType') || undefined) as HousingType | undefined,
     rentType: (params.get('rentType') || undefined) as RentType | undefined,
     depositMax: optionalNumber(params.get('depositMax')),
@@ -91,12 +93,14 @@ export default function SearchResultsPage() {
 
     const commonParams = {
       regionCode5: filters.regionCode5,
+      dong: filters.dong,
       sourceType: filters.sourceType,
       rentType: filters.rentType,
       months: 12,
     }
     const transactionParams = {
       regionCode5: filters.regionCode5,
+      dong: filters.dong,
       sourceType: filters.sourceType,
       rentType: filters.rentType,
       depositMax: filters.depositMax,

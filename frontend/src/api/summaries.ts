@@ -3,6 +3,7 @@ import type { HousingType, RentType } from './transactions'
 
 export interface SummaryQueryParams {
   regionCode5: string
+  dong?: string
   sourceType?: HousingType
   rentType?: RentType
   months?: number

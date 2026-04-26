@@ -14,6 +14,7 @@ function buildResultsUrl(params: {
   depositMax: string
   monthlyRentMax: string
   regionCode5: string
+  dong: string
 }) {
   const query = new URLSearchParams({
     q: params.q.trim(),
@@ -29,6 +30,9 @@ function buildResultsUrl(params: {
   }
   if (params.regionCode5.trim()) {
     query.set('regionCode5', params.regionCode5.trim())
+  }
+  if (params.dong.trim()) {
+    query.set('dong', params.dong.trim())
   }
 
   return `/results?${query.toString()}`
@@ -81,14 +85,17 @@ export default function HomePage() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const fallbackRegionCode5 = regionSuggestions[0]?.regionCode5 ?? ''
+    const fallbackRegion = regionSuggestions[0]
+    const selectedRegion = regionSuggestions.find((region) => region.regionCode5 === selectedRegionCode5)
+    const effectiveRegion = selectedRegion ?? fallbackRegion
     const nextUrl = buildResultsUrl({
       q: regionQuery,
       sourceType,
       rentType,
       depositMax,
       monthlyRentMax,
-      regionCode5: selectedRegionCode5 || fallbackRegionCode5,
+      regionCode5: selectedRegionCode5 || fallbackRegion?.regionCode5 || '',
+      dong: effectiveRegion?.dong || '',
     })
     navigateTo(nextUrl)
   }
