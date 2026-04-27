@@ -86,6 +86,51 @@ def test_compare_api_returns_region_summaries_diff_and_insight(client, db_sessio
     }
 
 
+def test_compare_api_filters_each_side_by_selected_dong(client, db_session):
+    add_transaction(db_session, region_dong="성수동", deposit_amount_manwon=10000, monthly_rent_manwon=50, source_hash="a-dong")
+    add_transaction(db_session, region_dong="금호동", deposit_amount_manwon=90000, monthly_rent_manwon=500, source_hash="a-other")
+    add_transaction(
+        db_session,
+        region_sigungu="광진구",
+        region_dong="자양동",
+        region_code_5="11230",
+        deposit_amount_manwon=20000,
+        monthly_rent_manwon=70,
+        source_hash="b-dong",
+    )
+    add_transaction(
+        db_session,
+        region_sigungu="광진구",
+        region_dong="구의동",
+        region_code_5="11230",
+        deposit_amount_manwon=80000,
+        monthly_rent_manwon=400,
+        source_hash="b-other",
+    )
+    db_session.commit()
+
+    response = client.get(
+        "/api/compare",
+        params={
+            "regionA": "11200",
+            "dongA": "성수동",
+            "regionB": "11230",
+            "dongB": "자양동",
+            "sourceType": "apartment",
+            "rentType": "monthly",
+            "months": 3,
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["regionA"]["transactionCount"] == 1
+    assert payload["regionA"]["avgDepositManwon"] == 10000
+    assert payload["regionB"]["transactionCount"] == 1
+    assert payload["regionB"]["avgDepositManwon"] == 20000
+    assert payload["diff"] == {"depositManwon": 10000, "monthlyRentManwon": 20}
+
+
 def test_compare_api_handles_missing_region_data(client, db_session):
     add_transaction(db_session, source_hash="a-only")
     db_session.commit()

@@ -74,12 +74,10 @@ function buildCompareUrl(filters: ResultFilters) {
   if (filters.regionCode5) {
     params.set('regionA', filters.regionCode5)
   }
-  if (filters.sourceType) {
-    params.set('sourceType', filters.sourceType)
+  if (filters.dong) {
+    params.set('dongA', filters.dong)
   }
-  if (filters.rentType) {
-    params.set('rentType', filters.rentType)
-  }
+  params.set('months', '3')
   return `/compare?${params.toString()}`
 }
 

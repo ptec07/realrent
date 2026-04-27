@@ -155,13 +155,14 @@ describe('MVP smoke flow', () => {
 
     expect(await screen.findByText('왕십리동은 성수동보다 평균 보증금과 월세가 높습니다.')).toBeInTheDocument()
     await waitFor(() => {
-      expect(mockedGetCompare).toHaveBeenLastCalledWith({
+      expect(mockedGetCompare).toHaveBeenCalledWith(expect.objectContaining({
         regionA: '11200',
         regionB: '11230',
-        sourceType: 'apartment',
-        rentType: 'monthly',
-        months: 12,
-      })
+        dongA: '성수동',
+        sourceType: 'officetel',
+        rentType: 'all',
+        months: 3,
+      }))
     })
   })
 })

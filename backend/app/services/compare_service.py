@@ -32,6 +32,8 @@ def compare_regions(
     *,
     region_a: str,
     region_b: str,
+    dong_a: str | None = None,
+    dong_b: str | None = None,
     source_type: HousingType | str | None = None,
     rent_type: CompareRentType | str | None = None,
     months: int = 12,
@@ -39,6 +41,7 @@ def compare_regions(
     summary_a = get_region_summary(
         db,
         region_code_5=region_a,
+        dong=dong_a,
         source_type=source_type,
         rent_type=rent_type,
         months=months,
@@ -46,6 +49,7 @@ def compare_regions(
     summary_b = get_region_summary(
         db,
         region_code_5=region_b,
+        dong=dong_b,
         source_type=source_type,
         rent_type=rent_type,
         months=months,

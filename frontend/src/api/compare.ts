@@ -4,6 +4,8 @@ import type { HousingType, RentType } from './transactions'
 export interface CompareQueryParams {
   regionA: string
   regionB: string
+  dongA?: string
+  dongB?: string
   sourceType?: HousingType
   rentType?: RentType
   months?: number

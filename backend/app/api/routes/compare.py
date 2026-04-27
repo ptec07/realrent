@@ -15,6 +15,8 @@ router = APIRouter(prefix="/api/compare", tags=["Compare"])
 def compare(
     region_a: str = Query(..., alias="regionA", description="비교 기준 A 지역의 5자리 법정동 시군구 코드"),
     region_b: str = Query(..., alias="regionB", description="비교 대상 B 지역의 5자리 법정동 시군구 코드"),
+    dong_a: str | None = Query(default=None, alias="dongA"),
+    dong_b: str | None = Query(default=None, alias="dongB"),
     source_type: HousingType | None = Query(default=None, alias="sourceType"),
     rent_type: RentType | Literal["all"] | None = Query(default=None, alias="rentType"),
     months: int = Query(default=12, ge=1, le=120),
@@ -24,6 +26,8 @@ def compare(
         db,
         region_a=region_a,
         region_b=region_b,
+        dong_a=dong_a,
+        dong_b=dong_b,
         source_type=source_type,
         rent_type=rent_type,
         months=months,

@@ -5,6 +5,7 @@
     { "source": "/results", "destination": "/" },
     { "source": "/compare", "destination": "/" },
     { "source": "/map", "destination": "/" },
+    { "source": "/price-trends", "destination": "/" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
