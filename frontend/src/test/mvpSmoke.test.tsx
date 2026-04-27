@@ -35,7 +35,29 @@ const mockedGetCompare = vi.mocked(getCompare)
 describe('MVP smoke flow', () => {
   beforeEach(() => {
     window.history.pushState({}, '', '/')
-    mockedListRegionHierarchy.mockResolvedValue({ sidos: [], sigungus: [], dongs: [] })
+    mockedListRegionHierarchy.mockImplementation((params = {}) => {
+      if (!params.sido) {
+        return Promise.resolve({ sidos: ['서울특별시'], sigungus: [], dongs: [] })
+      }
+      if (!params.sigungu) {
+        return Promise.resolve({ sidos: ['서울특별시'], sigungus: ['성동구', '광진구'], dongs: [] })
+      }
+      if (params.sigungu === '성동구') {
+        return Promise.resolve({
+          sidos: ['서울특별시'],
+          sigungus: ['성동구', '광진구'],
+          dongs: [{ fullName: '서울특별시 성동구 성수동', sido: '서울특별시', sigungu: '성동구', dong: '성수동', regionCode5: '11200' }],
+        })
+      }
+      if (params.sigungu === '광진구') {
+        return Promise.resolve({
+          sidos: ['서울특별시'],
+          sigungus: ['성동구', '광진구'],
+          dongs: [{ fullName: '서울특별시 광진구 자양동', sido: '서울특별시', sigungu: '광진구', dong: '자양동', regionCode5: '11230' }],
+        })
+      }
+      return Promise.resolve({ sidos: ['서울특별시'], sigungus: ['성동구', '광진구'], dongs: [] })
+    })
     mockedSearchRegions.mockResolvedValue({
       items: [
         {
@@ -134,8 +156,11 @@ describe('MVP smoke flow', () => {
   it('searches a region, opens transaction detail, and compares with another region', async () => {
     render(<App />)
 
-    fireEvent.change(screen.getByLabelText('지역명'), { target: { value: '성수' } })
-    fireEvent.click(await screen.findByRole('button', { name: '서울특별시 성동구 성수동 선택' }))
+    fireEvent.change(await screen.findByLabelText('특별시·광역시·도'), { target: { value: '서울특별시' } })
+    fireEvent.change(await screen.findByLabelText('시군구'), { target: { value: '성동구' } })
+    fireEvent.change(await screen.findByLabelText('읍면동'), { target: { value: '성수동' } })
+    expect(screen.queryByLabelText('지역명')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '서울특별시 성동구 성수동 선택' })).toHaveClass('selected')
     fireEvent.click(screen.getByRole('radio', { name: '월세' }))
     fireEvent.change(screen.getByLabelText('보증금 상한'), { target: { value: '12000' } })
     fireEvent.change(screen.getByLabelText('월세 상한'), { target: { value: '70' } })
@@ -150,7 +175,9 @@ describe('MVP smoke flow', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '지역 비교하기' }))
     expect(window.location.pathname).toBe('/compare')
-    fireEvent.change(await screen.findByLabelText('지역 B 코드'), { target: { value: '11230' } })
+    fireEvent.change(await screen.findByLabelText('특별시·광역시·도'), { target: { value: '서울특별시' } })
+    fireEvent.change(await screen.findByLabelText('시군구'), { target: { value: '광진구' } })
+    fireEvent.change(await screen.findByLabelText('읍면동'), { target: { value: '자양동' } })
     fireEvent.click(screen.getByRole('button', { name: '비교하기' }))
 
     expect(await screen.findByText('왕십리동은 성수동보다 평균 보증금과 월세가 높습니다.')).toBeInTheDocument()

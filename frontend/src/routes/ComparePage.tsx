@@ -4,7 +4,6 @@ import { getCompare, type CompareResponse } from '../api/compare'
 import { listRegionHierarchy, type RegionItem } from '../api/regions'
 import type { HousingType, RentType } from '../api/transactions'
 import CompareInsightText from '../components/compare/CompareInsightText'
-import CompareRegionPicker from '../components/compare/CompareRegionPicker'
 import CompareSummaryCards from '../components/compare/CompareSummaryCards'
 import RegionHierarchySelect from '../components/search/RegionHierarchySelect'
 import { navigateTo } from '../utils/navigation'
@@ -70,22 +69,18 @@ function buildCompareUrl(filters: CompareFilters) {
   return `/compare?${params.toString()}`
 }
 
-function buildPriceTrendsUrl(filters: CompareFilters) {
+
+function buildResultsUrl(filters: CompareFilters) {
   const params = new URLSearchParams()
-  if (filters.regionA.trim()) params.set('regionA', filters.regionA.trim())
-  if (filters.dongA?.trim()) params.set('dongA', filters.dongA.trim())
-  if (filters.regionB.trim()) params.set('regionB', filters.regionB.trim())
-  if (filters.dongB?.trim()) params.set('dongB', filters.dongB.trim())
-  params.set('months', String(filters.months || DEFAULT_COMPARE_MONTHS))
-  return `/price-trends?${params.toString()}`
+  if (filters.regionA.trim()) params.set('regionCode5', filters.regionA.trim())
+  if (filters.dongA?.trim()) {
+    params.set('dong', filters.dongA.trim())
+    params.set('q', filters.dongA.trim())
+  }
+  return `/results?${params.toString()}`
 }
 
-function handleMainLinkClick(event: MouseEvent<HTMLAnchorElement>) {
-  event.preventDefault()
-  navigateTo('/')
-}
-
-function handleTrendLinkClick(event: MouseEvent<HTMLAnchorElement>, url: string) {
+function handleNavLinkClick(event: MouseEvent<HTMLAnchorElement>, url: string) {
   event.preventDefault()
   navigateTo(url)
 }
@@ -93,7 +88,7 @@ function handleTrendLinkClick(event: MouseEvent<HTMLAnchorElement>, url: string)
 export default function ComparePage() {
   const initialFilters = useMemo(() => parseFilters(window.location.search), [])
   const [filters, setFilters] = useState<CompareFilters>(initialFilters)
-  const [regionAInput, setRegionAInput] = useState(initialFilters.regionA)
+  const regionAInput = initialFilters.regionA
   const [regionBInput, setRegionBInput] = useState(initialFilters.regionB)
   const [months, setMonths] = useState(String(initialFilters.months || DEFAULT_COMPARE_MONTHS))
   const [status, setStatus] = useState<LoadState>('idle')
@@ -242,23 +237,21 @@ export default function ComparePage() {
     setFilters(nextFilters)
   }
 
-  const trendUrl = buildPriceTrendsUrl(filters)
+  const resultsUrl = buildResultsUrl(filters)
   const primaryComparison = comparisons['apartment-sale'] ?? comparisons['apartment-rent']
 
   return (
     <main className="app-shell results-shell">
       <section className="results-page">
         <p className="eyebrow">RealRent MVP</p>
-        <a className="secondary-link main-screen-link" href="/" onClick={handleMainLinkClick}>
-          메인화면
-        </a>
-        <div className="page-title-row">
-          <div>
-            <h1>지역 비교</h1>
-            <p className="lead">결과로 보고 있던 동과 새로 선택한 동의 아파트·오피스텔 평균매매가와 전월세를 비교합니다.</p>
-          </div>
-          <a className="secondary-link" href={trendUrl} onClick={(event) => handleTrendLinkClick(event, trendUrl)}>
-            실거래가변동화면
+        <h1>지역 비교</h1>
+        <p className="lead">결과로 보고 있던 동과 새로 선택한 동의 아파트·오피스텔 평균매매가와 전월세를 비교합니다.</p>
+        <div className="page-action-row">
+          <a className="secondary-action main-screen-link" href="/" onClick={(event) => handleNavLinkClick(event, '/')}>
+            메인화면
+          </a>
+          <a className="secondary-action results-screen-link" href={resultsUrl} onClick={(event) => handleNavLinkClick(event, resultsUrl)}>
+            검색결과
           </a>
         </div>
 
@@ -284,17 +277,13 @@ export default function ComparePage() {
             onSigunguChange={handleSigunguChange}
             onDongChange={handleDongChange}
           />
-          <CompareRegionPicker
-            regionA={regionAInput}
-            regionB={regionBInput}
-            onRegionAChange={setRegionAInput}
-            onRegionBChange={setRegionBInput}
-            onSubmit={handleSubmit}
-          />
+          <button className="primary-action" type="button" onClick={handleSubmit}>
+            비교하기
+          </button>
         </section>
 
         {!filters.regionA || !filters.regionB ? (
-          <p className="empty-state">비교할 두 지역 코드를 입력해 주세요.</p>
+          <p className="empty-state">비교할 두 지역을 선택해 주세요.</p>
         ) : null}
         {status === 'loading' ? <p className="empty-state">비교 결과를 불러오는 중입니다.</p> : null}
         {status === 'error' ? <p className="empty-state">비교 결과를 불러오지 못했습니다.</p> : null}

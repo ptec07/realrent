@@ -22,11 +22,11 @@ export default function CompareSummaryCards({ regionA, regionB, diff, isSale = f
       <h2 id="compare-summary-heading">비교 요약</h2>
       <div className="compare-summary-grid">
         <article className="summary-card">
-          <h3>지역 A · {regionA.regionCode5}</h3>
+          <h3>기준 지역</h3>
           <p>{regionLine(regionA, isSale)}</p>
         </article>
         <article className="summary-card">
-          <h3>지역 B · {regionB.regionCode5}</h3>
+          <h3>비교 지역</h3>
           <p>{regionLine(regionB, isSale)}</p>
         </article>
         <article className="summary-card">{isSale ? '매매가 차이' : '보증금 차이'} {formatSignedManwon(diff?.depositManwon)}</article>

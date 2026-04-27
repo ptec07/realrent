@@ -130,24 +130,27 @@ export default function SearchResultsPage() {
     navigateTo(buildCompareUrl(filters))
   }
 
+
   return (
     <main className="app-shell results-shell">
       <section className="results-page">
         <p className="eyebrow">RealRent MVP</p>
-        <a className="secondary-link main-screen-link" href="/" onClick={handleMainLinkClick}>
-          메인화면
-        </a>
         <h1>검색 결과</h1>
         <p className="lead">
-          {filters.q || filters.regionCode5 || '선택한 지역'}의 {isSale ? '매매' : '전월세'} 실거래 요약입니다.
+          {filters.q || filters.dong || '선택한 지역'}의 {isSale ? '매매' : '전월세'} 실거래 요약입니다.
         </p>
         {filters.regionCode5 ? (
-          <button className="secondary-action" type="button" onClick={handleCompareClick}>
-            지역 비교하기
-          </button>
+          <div className="page-action-row">
+            <a className="secondary-action main-screen-link" href="/" onClick={handleMainLinkClick}>
+              메인화면
+            </a>
+            <button className="secondary-action" type="button" onClick={handleCompareClick}>
+              지역 비교하기
+            </button>
+          </div>
         ) : null}
 
-        {!filters.regionCode5 ? <p className="empty-state">지역 코드가 없어 결과를 불러올 수 없습니다.</p> : null}
+        {!filters.regionCode5 ? <p className="empty-state">선택한 지역 정보가 없어 결과를 불러올 수 없습니다.</p> : null}
         {status === 'loading' ? <p className="empty-state">결과를 불러오는 중입니다.</p> : null}
         {status === 'error' ? <p className="empty-state">결과를 불러오지 못했습니다.</p> : null}
 

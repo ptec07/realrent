@@ -5,7 +5,7 @@ import HousingTypeToggle, { type HousingTypeFilter } from '../components/filters
 import RentTypeToggle, { type RentTypeFilter } from '../components/filters/RentTypeToggle'
 import RegionHierarchySelect from '../components/search/RegionHierarchySelect'
 import RegionSearchBox from '../components/search/RegionSearchBox'
-import { listRegionHierarchy, searchRegions, type RegionItem } from '../api/regions'
+import { listRegionHierarchy, type RegionItem } from '../api/regions'
 import { navigateTo } from '../utils/navigation'
 
 function buildResultsUrl(params: {
@@ -45,7 +45,6 @@ export default function HomePage() {
   const [rentType, setRentType] = useState<RentTypeFilter>('all')
   const [depositMax, setDepositMax] = useState('')
   const [monthlyRentMax, setMonthlyRentMax] = useState('')
-  const [regionSuggestions, setRegionSuggestions] = useState<RegionItem[]>([])
   const [selectedRegionCode5, setSelectedRegionCode5] = useState('')
   const [sidos, setSidos] = useState<string[]>([])
   const [sigungus, setSigungus] = useState<string[]>([])
@@ -131,44 +130,6 @@ export default function HomePage() {
     }
   }, [selectedSido, selectedSigungu])
 
-  useEffect(() => {
-    const query = regionQuery.trim()
-    if (query.length < 2) {
-      setRegionSuggestions([])
-      return
-    }
-
-    let active = true
-    searchRegions(query)
-      .then((response) => {
-        if (active) {
-          setRegionSuggestions(response.items)
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setRegionSuggestions([])
-        }
-      })
-
-    return () => {
-      active = false
-    }
-  }, [regionQuery])
-
-  function handleRegionQueryChange(nextQuery: string) {
-    setRegionQuery(nextQuery)
-    setSelectedRegionCode5('')
-    setSelectedHierarchyRegion(null)
-  }
-
-  function handleRegionSelect(region: RegionItem) {
-    setRegionQuery(region.dong || region.fullName)
-    setSelectedRegionCode5(region.regionCode5)
-    setSelectedHierarchyRegion(null)
-    setRegionSuggestions([region])
-  }
-
   function handleSidoChange(nextSido: string) {
     setSelectedSido(nextSido)
     setRegionQuery(nextSido)
@@ -191,17 +152,18 @@ export default function HomePage() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const fallbackRegion = regionSuggestions[0]
-    const selectedRegion = regionSuggestions.find((region) => region.regionCode5 === selectedRegionCode5)
-    const effectiveRegion = selectedHierarchyRegion ?? selectedRegion ?? fallbackRegion
+    if (!selectedSido || !selectedSigungu || !selectedHierarchyRegion) {
+      return
+    }
+    const effectiveRegion = selectedHierarchyRegion
     const nextUrl = buildResultsUrl({
       q: regionQuery,
       sourceType,
       rentType,
       depositMax,
       monthlyRentMax,
-      regionCode5: effectiveRegion?.regionCode5 || selectedRegionCode5 || fallbackRegion?.regionCode5 || '',
-      dong: effectiveRegion?.dong || '',
+      regionCode5: effectiveRegion.regionCode5 || selectedRegionCode5 || '',
+      dong: effectiveRegion.dong || '',
     })
     navigateTo(nextUrl)
   }
@@ -227,10 +189,11 @@ export default function HomePage() {
           />
           <RegionSearchBox
             value={regionQuery}
-            onChange={handleRegionQueryChange}
-            suggestions={regionSuggestions}
+            readOnly
+            showInput={false}
+            onChange={() => undefined}
+            suggestions={selectedHierarchyRegion ? [selectedHierarchyRegion] : []}
             selectedRegionCode5={selectedRegionCode5}
-            onSelect={handleRegionSelect}
           />
           <div className="filter-grid" aria-label="검색 필터">
             <HousingTypeToggle value={sourceType} onChange={setSourceType} />

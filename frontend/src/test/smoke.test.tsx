@@ -15,4 +15,13 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /리얼랜트/i })).toBeInTheDocument()
     expect(screen.getByText(/서울·수도권 전월세 실거래가/i)).toBeInTheDocument()
   })
+
+  it('renders the landing page instead of the removed price-trends screen on /price-trends', () => {
+    window.history.pushState({}, '', '/price-trends?regionA=11200&dongA=성수동')
+
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: /리얼랜트/i })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: '실거래가 변동' })).not.toBeInTheDocument()
+  })
 })

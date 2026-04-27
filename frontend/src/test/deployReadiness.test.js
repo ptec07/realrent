@@ -17,7 +17,7 @@ describe('deployment readiness docs and config', () => {
     expect(packageJson.scripts.build).toContain('cp dist/index.html dist/404.html')
   })
 
-  it('defines Vercel rewrites for known SPA routes and the generic app shell', () => {
+  it('defines Vercel rewrites only for active SPA routes and the generic app shell', () => {
     const vercelConfig = JSON.parse(readRepoFile('frontend/vercel.json'))
 
     expect(vercelConfig.outputDirectory).toBe('dist')
@@ -25,9 +25,11 @@ describe('deployment readiness docs and config', () => {
       expect.arrayContaining([
         { source: '/results', destination: '/' },
         { source: '/compare', destination: '/' },
+        { source: '/map', destination: '/' },
         { source: '/(.*)', destination: '/index.html' },
       ]),
     )
+    expect(vercelConfig.rewrites).not.toContainEqual({ source: '/price-trends', destination: '/' })
   })
 
   it('documents local setup and Render/Vercel deployment steps in README', () => {

@@ -79,18 +79,18 @@ describe('ComparePage', () => {
     render(<ComparePage />)
 
     expect(screen.getByRole('heading', { name: '지역 비교' })).toBeInTheDocument()
-    expect(screen.getByLabelText('지역 A 코드')).toHaveValue('11200')
-    expect(screen.getByLabelText('지역 B 코드')).toHaveValue('11230')
 
-    expect((await screen.findAllByText('지역 A · 11200')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('기준 지역')).length).toBeGreaterThan(0)
     expect(screen.getAllByText('거래 7건 · 평균 보증금 1억 2,000만원 · 평균 월세 70만원').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('지역 B · 11230').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('비교 지역').length).toBeGreaterThan(0)
     expect(screen.getAllByText('거래 5건 · 평균 보증금 1억 5,000만원 · 평균 월세 90만원').length).toBeGreaterThan(0)
     expect(screen.getAllByText(/보증금 차이/).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/월세 차이/).length).toBeGreaterThan(0)
     expect(
-      screen.getByText('11230 지역은 11200 지역보다 평균 보증금이 3,000만원 높고 월세가 20만원 높습니다.'),
+      screen.getByText('비교 지역은 기준 지역보다 평균 보증금이 3,000만원 높고 월세가 20만원 높습니다.'),
     ).toBeInTheDocument()
+    expect(screen.queryByText(/11200|11230/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/지역 .*코드/)).not.toBeInTheDocument()
 
     await waitFor(() => {
       expect(mockedGetCompare).toHaveBeenCalledWith(expect.objectContaining({
@@ -103,25 +103,13 @@ describe('ComparePage', () => {
     })
   })
 
-  it('updates URL and reloads comparison when user submits region codes', async () => {
+  it('does not expose manual region-code inputs in the compare form', () => {
     render(<ComparePage />)
 
-    fireEvent.change(screen.getByLabelText('지역 A 코드'), { target: { value: '11110' } })
-    fireEvent.change(screen.getByLabelText('지역 B 코드'), { target: { value: '11680' } })
-    fireEvent.click(screen.getByRole('button', { name: '비교하기' }))
-
-    expect(window.location.pathname).toBe('/compare')
-    expect(window.location.search).toBe('?regionA=11110&regionB=11680&months=3')
-
-    await waitFor(() => {
-      expect(mockedGetCompare).toHaveBeenCalledWith(expect.objectContaining({
-        regionA: '11110',
-        regionB: '11680',
-        sourceType: 'officetel',
-        rentType: 'all',
-        months: 3,
-      }))
-    })
+    expect(screen.queryByLabelText('지역 A 코드')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('지역 B 코드')).not.toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('예: 11200')).not.toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('예: 11230')).not.toBeInTheDocument()
   })
 
   it('shows an empty state when both region codes are not selected', () => {
@@ -129,7 +117,7 @@ describe('ComparePage', () => {
 
     render(<ComparePage />)
 
-    expect(screen.getByText('비교할 두 지역 코드를 입력해 주세요.')).toBeInTheDocument()
+    expect(screen.getByText('비교할 두 지역을 선택해 주세요.')).toBeInTheDocument()
     expect(mockedGetCompare).not.toHaveBeenCalled()
   })
 
@@ -160,15 +148,24 @@ describe('ComparePage', () => {
     expect(window.location.search).toContain('dongB=%EC%9E%90%EC%96%91%EB%8F%99')
   })
 
-  it('links to the transaction price trend page beside compare results', async () => {
+  it('places main and search-result actions as buttons and removes the price-trend action from compare', async () => {
     window.history.pushState({}, '', '/compare?regionA=11200&dongA=성수동&regionB=11230&dongB=자양동')
     render(<ComparePage />)
 
-    const link = await screen.findByRole('link', { name: '실거래가변동화면' })
-    expect(link).toHaveAttribute('href', expect.stringContaining('/price-trends?'))
-    expect(link).toHaveAttribute('href', expect.stringContaining('months=3'))
-    expect(link).toHaveAttribute('href', expect.stringContaining('dongA='))
-    expect(link).toHaveAttribute('href', expect.stringContaining('dongB='))
+    const mainLink = screen.getByRole('link', { name: '메인화면' })
+    const resultsLink = screen.getByRole('link', { name: '검색결과' })
+    const actionRow = mainLink.closest('.page-action-row')
+
+    expect(actionRow).not.toBeNull()
+    expect(actionRow).toContainElement(mainLink)
+    expect(actionRow).toContainElement(resultsLink)
+    expect(mainLink.compareDocumentPosition(resultsLink) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(mainLink).toHaveClass('secondary-action')
+    expect(resultsLink).toHaveClass('secondary-action')
+    expect(resultsLink).toHaveAttribute('href', expect.stringContaining('/results?'))
+    expect(resultsLink).toHaveAttribute('href', expect.stringContaining('regionCode5=11200'))
+    expect(resultsLink).toHaveAttribute('href', expect.stringContaining('dong='))
+    expect(screen.queryByRole('link', { name: '실거래가변동' })).not.toBeInTheDocument()
   })
 
 })

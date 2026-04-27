@@ -6,6 +6,8 @@ interface RegionSearchBoxProps {
   suggestions?: RegionItem[]
   selectedRegionCode5?: string
   onSelect?: (region: RegionItem) => void
+  readOnly?: boolean
+  showInput?: boolean
 }
 
 export default function RegionSearchBox({
@@ -14,19 +16,28 @@ export default function RegionSearchBox({
   suggestions = [],
   selectedRegionCode5,
   onSelect,
+  readOnly = false,
+  showInput = true,
 }: RegionSearchBoxProps) {
   return (
     <div className="region-search-box">
-      <label className="field-group" htmlFor="region-query">
-        <span>지역명</span>
-        <input
-          id="region-query"
-          name="region"
-          value={value}
-          placeholder="예: 성수동, 강남구, 송도"
-          onChange={(event) => onChange(event.target.value)}
-        />
-      </label>
+      {showInput ? (
+        <label className="field-group" htmlFor="region-query">
+          <span>지역명</span>
+          <input
+            id="region-query"
+            name="region"
+            value={value}
+            placeholder="시도·시군구·읍면동을 선택하면 표시됩니다"
+            readOnly={readOnly}
+            onChange={(event) => {
+              if (!readOnly) {
+                onChange(event.target.value)
+              }
+            }}
+          />
+        </label>
+      ) : null}
       {suggestions.length > 0 ? (
         <div className="region-suggestions" aria-label="지역 검색 결과">
           {suggestions.map((region) => (
@@ -38,7 +49,6 @@ export default function RegionSearchBox({
               onClick={() => onSelect?.(region)}
             >
               <span>{region.fullName}</span>
-              <small>{region.regionCode5}</small>
               <span className="sr-only"> 선택</span>
             </button>
           ))}

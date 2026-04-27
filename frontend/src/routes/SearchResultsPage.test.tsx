@@ -153,6 +153,26 @@ describe('SearchResultsPage', () => {
     expect(window.location.pathname).toBe('/')
   })
 
+  it('places main and compare actions together as buttons and removes every price-trend entry point', async () => {
+    render(<SearchResultsPage />)
+    await screen.findByText('거래 7건')
+
+    const mainButton = screen.getByRole('link', { name: '메인화면' })
+    const compareButton = screen.getByRole('button', { name: '지역 비교하기' })
+    const actionRow = mainButton.closest('.page-action-row')
+
+    expect(actionRow).not.toBeNull()
+    expect(actionRow).toContainElement(mainButton)
+    expect(actionRow).toContainElement(compareButton)
+    expect(mainButton.compareDocumentPosition(compareButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(mainButton).toHaveClass('secondary-action')
+    expect(compareButton).toHaveClass('secondary-action')
+    expect(screen.queryByRole('link', { name: /실거래가변동|실거래가 변동/ })).not.toBeInTheDocument()
+    expect(document.body.innerHTML).not.toContain('/price-trends')
+    expect(screen.queryByText('11200')).not.toBeInTheDocument()
+    expect(screen.queryByText(/지역 코드/)).not.toBeInTheDocument()
+  })
+
   it('passes the selected dong to every results API request', async () => {
     window.history.pushState(
       {},
@@ -325,7 +345,7 @@ describe('SearchResultsPage', () => {
 
     render(<SearchResultsPage />)
 
-    expect(screen.getByText('지역 코드가 없어 결과를 불러올 수 없습니다.')).toBeInTheDocument()
+    expect(screen.getByText('선택한 지역 정보가 없어 결과를 불러올 수 없습니다.')).toBeInTheDocument()
     expect(mockedGetSummary).not.toHaveBeenCalled()
     expect(mockedGetTrends).not.toHaveBeenCalled()
     expect(mockedGetTransactions).not.toHaveBeenCalled()
