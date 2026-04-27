@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getCompare } from '../api/compare'
-import { searchRegions } from '../api/regions'
+import { listRegionHierarchy, searchRegions } from '../api/regions'
 import { getSummary } from '../api/summaries'
 import { getTransactions } from '../api/transactions'
 import { getTrends } from '../api/trends'
@@ -10,6 +10,7 @@ import App from '../App'
 
 vi.mock('../api/regions', () => ({
   searchRegions: vi.fn(),
+  listRegionHierarchy: vi.fn(),
 }))
 vi.mock('../api/summaries', () => ({
   getSummary: vi.fn(),
@@ -25,6 +26,7 @@ vi.mock('../api/compare', () => ({
 }))
 
 const mockedSearchRegions = vi.mocked(searchRegions)
+const mockedListRegionHierarchy = vi.mocked(listRegionHierarchy)
 const mockedGetSummary = vi.mocked(getSummary)
 const mockedGetTrends = vi.mocked(getTrends)
 const mockedGetTransactions = vi.mocked(getTransactions)
@@ -33,6 +35,7 @@ const mockedGetCompare = vi.mocked(getCompare)
 describe('MVP smoke flow', () => {
   beforeEach(() => {
     window.history.pushState({}, '', '/')
+    mockedListRegionHierarchy.mockResolvedValue({ sidos: [], sigungus: [], dongs: [] })
     mockedSearchRegions.mockResolvedValue({
       items: [
         {

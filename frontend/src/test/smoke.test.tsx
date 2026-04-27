@@ -1,7 +1,12 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import App from '../App'
+
+vi.mock('../api/regions', () => ({
+  searchRegions: vi.fn(() => new Promise(() => {})),
+  listRegionHierarchy: vi.fn(() => new Promise(() => {})),
+}))
 
 describe('App', () => {
   it('renders the RealRent landing headline', () => {

@@ -3,8 +3,9 @@ import { useEffect, useState, type FormEvent } from 'react'
 import BudgetFilterPanel from '../components/filters/BudgetFilterPanel'
 import HousingTypeToggle, { type HousingTypeFilter } from '../components/filters/HousingTypeToggle'
 import RentTypeToggle, { type RentTypeFilter } from '../components/filters/RentTypeToggle'
+import RegionHierarchySelect from '../components/search/RegionHierarchySelect'
 import RegionSearchBox from '../components/search/RegionSearchBox'
-import { searchRegions, type RegionItem } from '../api/regions'
+import { listRegionHierarchy, searchRegions, type RegionItem } from '../api/regions'
 import { navigateTo } from '../utils/navigation'
 
 function buildResultsUrl(params: {
@@ -46,6 +47,89 @@ export default function HomePage() {
   const [monthlyRentMax, setMonthlyRentMax] = useState('')
   const [regionSuggestions, setRegionSuggestions] = useState<RegionItem[]>([])
   const [selectedRegionCode5, setSelectedRegionCode5] = useState('')
+  const [sidos, setSidos] = useState<string[]>([])
+  const [sigungus, setSigungus] = useState<string[]>([])
+  const [hierarchyDongs, setHierarchyDongs] = useState<RegionItem[]>([])
+  const [selectedSido, setSelectedSido] = useState('')
+  const [selectedSigungu, setSelectedSigungu] = useState('')
+  const [selectedDong, setSelectedDong] = useState('')
+  const [selectedHierarchyRegion, setSelectedHierarchyRegion] = useState<RegionItem | null>(null)
+
+  useEffect(() => {
+    let active = true
+    listRegionHierarchy()
+      .then((response) => {
+        if (active) {
+          setSidos(response.sidos)
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setSidos([])
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    setSigungus([])
+    setHierarchyDongs([])
+    setSelectedSigungu('')
+    setSelectedDong('')
+    setSelectedHierarchyRegion(null)
+    if (!selectedSido) {
+      return
+    }
+
+    let active = true
+    listRegionHierarchy({ sido: selectedSido })
+      .then((response) => {
+        if (active) {
+          setSidos(response.sidos)
+          setSigungus(response.sigungus)
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setSigungus([])
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [selectedSido])
+
+  useEffect(() => {
+    setHierarchyDongs([])
+    setSelectedDong('')
+    setSelectedHierarchyRegion(null)
+    if (!selectedSido || !selectedSigungu) {
+      return
+    }
+
+    let active = true
+    listRegionHierarchy({ sido: selectedSido, sigungu: selectedSigungu })
+      .then((response) => {
+        if (active) {
+          setSidos(response.sidos)
+          setSigungus(response.sigungus)
+          setHierarchyDongs(response.dongs)
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setHierarchyDongs([])
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [selectedSido, selectedSigungu])
 
   useEffect(() => {
     const query = regionQuery.trim()
@@ -75,26 +159,48 @@ export default function HomePage() {
   function handleRegionQueryChange(nextQuery: string) {
     setRegionQuery(nextQuery)
     setSelectedRegionCode5('')
+    setSelectedHierarchyRegion(null)
   }
 
   function handleRegionSelect(region: RegionItem) {
     setRegionQuery(region.dong || region.fullName)
     setSelectedRegionCode5(region.regionCode5)
+    setSelectedHierarchyRegion(null)
     setRegionSuggestions([region])
+  }
+
+  function handleSidoChange(nextSido: string) {
+    setSelectedSido(nextSido)
+    setRegionQuery(nextSido)
+    setSelectedRegionCode5('')
+  }
+
+  function handleSigunguChange(nextSigungu: string) {
+    setSelectedSigungu(nextSigungu)
+    setRegionQuery([selectedSido, nextSigungu].filter(Boolean).join(' '))
+    setSelectedRegionCode5('')
+  }
+
+  function handleDongChange(nextDong: string) {
+    setSelectedDong(nextDong)
+    const matchingRegion = hierarchyDongs.find((region) => region.dong === nextDong) ?? null
+    setSelectedHierarchyRegion(matchingRegion)
+    setSelectedRegionCode5(matchingRegion?.regionCode5 ?? '')
+    setRegionQuery(matchingRegion?.fullName ?? [selectedSido, selectedSigungu, nextDong].filter(Boolean).join(' '))
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const fallbackRegion = regionSuggestions[0]
     const selectedRegion = regionSuggestions.find((region) => region.regionCode5 === selectedRegionCode5)
-    const effectiveRegion = selectedRegion ?? fallbackRegion
+    const effectiveRegion = selectedHierarchyRegion ?? selectedRegion ?? fallbackRegion
     const nextUrl = buildResultsUrl({
       q: regionQuery,
       sourceType,
       rentType,
       depositMax,
       monthlyRentMax,
-      regionCode5: selectedRegionCode5 || fallbackRegion?.regionCode5 || '',
+      regionCode5: effectiveRegion?.regionCode5 || selectedRegionCode5 || fallbackRegion?.regionCode5 || '',
       dong: effectiveRegion?.dong || '',
     })
     navigateTo(nextUrl)
@@ -108,6 +214,17 @@ export default function HomePage() {
         <p className="lead">서울·수도권 전월세 실거래가를 검색하고 비교하는 웹 서비스</p>
 
         <form className="search-card" aria-label="지역 검색" onSubmit={handleSubmit}>
+          <RegionHierarchySelect
+            sidos={sidos}
+            sigungus={sigungus}
+            dongs={hierarchyDongs}
+            selectedSido={selectedSido}
+            selectedSigungu={selectedSigungu}
+            selectedDong={selectedDong}
+            onSidoChange={handleSidoChange}
+            onSigunguChange={handleSigunguChange}
+            onDongChange={handleDongChange}
+          />
           <RegionSearchBox
             value={regionQuery}
             onChange={handleRegionQueryChange}

@@ -118,6 +118,7 @@ h1 {
 }
 
 input,
+select,
 button {
   border-radius: 14px;
   border: 1px solid #d8deed;
@@ -125,8 +126,25 @@ button {
   padding: 14px 16px;
 }
 
-input {
+input,
+select {
   width: 100%;
+}
+
+select {
+  background: white;
+  color: #172033;
+}
+
+select:disabled {
+  background: #eef2f7;
+  color: #7b849b;
+}
+
+.region-hierarchy {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .region-search-box {
@@ -352,6 +370,7 @@ button {
   .filter-grid,
   .budget-panel,
   .compare-picker,
+  .region-hierarchy,
   .summary-grid,
   .compare-summary-grid {
     grid-template-columns: 1fr;

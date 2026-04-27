@@ -1,18 +1,22 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { searchRegions } from '../api/regions'
+import { listRegionHierarchy, searchRegions } from '../api/regions'
 import HomePage from './HomePage'
 
 vi.mock('../api/regions', () => ({
   searchRegions: vi.fn(() => new Promise(() => {})),
+  listRegionHierarchy: vi.fn(() => new Promise(() => {})),
 }))
 
 const mockedSearchRegions = vi.mocked(searchRegions)
+const mockedListRegionHierarchy = vi.mocked(listRegionHierarchy)
 
 describe('HomePage', () => {
   afterEach(() => {
     window.history.pushState({}, '', '/')
+    vi.clearAllMocks()
+    mockedListRegionHierarchy.mockImplementation(() => new Promise(() => {}))
   })
 
   it('renders region search and basic rental filters', () => {
@@ -88,6 +92,52 @@ describe('HomePage', () => {
     expect(window.location.pathname).toBe('/results')
     expect(window.location.search).toContain('regionCode5=11200')
     expect(window.location.search).toContain('dong=%EC%84%B1%EC%88%98%EB%8F%99')
+  })
+
+  it('loads 시도, 시군구, 읍면동 listboxes hierarchically and searches the selected dong', async () => {
+    mockedListRegionHierarchy
+      .mockResolvedValueOnce({ sidos: ['경기도', '서울특별시'], sigungus: [], dongs: [] })
+      .mockResolvedValueOnce({ sidos: ['경기도', '서울특별시'], sigungus: ['남양주시', '의정부시'], dongs: [] })
+      .mockResolvedValueOnce({
+        sidos: ['경기도', '서울특별시'],
+        sigungus: ['남양주시', '의정부시'],
+        dongs: [
+          {
+            fullName: '경기도 의정부시 가능동',
+            sido: '경기도',
+            sigungu: '의정부시',
+            dong: '가능동',
+            regionCode5: '41150',
+          },
+          {
+            fullName: '경기도 의정부시 의정부동',
+            sido: '경기도',
+            sigungu: '의정부시',
+            dong: '의정부동',
+            regionCode5: '41150',
+          },
+        ],
+      })
+    render(<HomePage />)
+
+    expect(await screen.findByRole('combobox', { name: '특별시·광역시·도' })).toHaveTextContent('경기도')
+    fireEvent.change(screen.getByRole('combobox', { name: '특별시·광역시·도' }), { target: { value: '경기도' } })
+    expect(await screen.findByRole('combobox', { name: '시군구' })).toHaveTextContent('남양주시')
+    expect(screen.getByRole('combobox', { name: '시군구' })).toHaveTextContent('의정부시')
+
+    fireEvent.change(screen.getByRole('combobox', { name: '시군구' }), { target: { value: '의정부시' } })
+    expect(await screen.findByRole('combobox', { name: '읍면동' })).toHaveTextContent('가능동')
+    expect(screen.getByRole('combobox', { name: '읍면동' })).toHaveTextContent('의정부동')
+
+    fireEvent.change(screen.getByRole('combobox', { name: '읍면동' }), { target: { value: '가능동' } })
+    fireEvent.click(screen.getByRole('button', { name: '검색' }))
+
+    await waitFor(() => expect(window.location.pathname).toBe('/results'))
+    expect(window.location.search).toContain('q=%EA%B2%BD%EA%B8%B0%EB%8F%84+%EC%9D%98%EC%A0%95%EB%B6%80%EC%8B%9C+%EA%B0%80%EB%8A%A5%EB%8F%99')
+    expect(window.location.search).toContain('regionCode5=41150')
+    expect(window.location.search).toContain('dong=%EA%B0%80%EB%8A%A5%EB%8F%99')
+    expect(mockedListRegionHierarchy).toHaveBeenCalledWith({ sido: '경기도' })
+    expect(mockedListRegionHierarchy).toHaveBeenCalledWith({ sido: '경기도', sigungu: '의정부시' })
   })
 
   it('includes the selected 읍면동 so results do not include other dongs in the same sigungu', async () => {

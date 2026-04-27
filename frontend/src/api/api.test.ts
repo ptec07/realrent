@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { getCompare } from './compare'
-import { searchRegions } from './regions'
+import { listRegionHierarchy, searchRegions } from './regions'
 import { getSummary } from './summaries'
 import { getTransactions } from './transactions'
 import { getTrends } from './trends'
@@ -40,6 +40,33 @@ describe('frontend API wrappers', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/api/regions?q=%EC%84%B1%EC%88%98%EB%8F%99')
     expect(result.items[0].regionCode5).toBe('11200')
+  })
+
+  it('listRegionHierarchy fetches dependent region listbox options', async () => {
+    const fetchMock = vi.fn(() =>
+      mockJsonResponse({
+        sidos: ['경기도'],
+        sigungus: ['남양주시', '의정부시'],
+        dongs: [
+          {
+            fullName: '경기도 의정부시 가능동',
+            sido: '경기도',
+            sigungu: '의정부시',
+            dong: '가능동',
+            regionCode5: '41150',
+          },
+        ],
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await listRegionHierarchy({ sido: '경기도', sigungu: '의정부시' })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/regions/hierarchy?sido=%EA%B2%BD%EA%B8%B0%EB%8F%84&sigungu=%EC%9D%98%EC%A0%95%EB%B6%80%EC%8B%9C',
+    )
+    expect(result.sigungus).toEqual(['남양주시', '의정부시'])
+    expect(result.dongs[0].dong).toBe('가능동')
   })
 
   it('getTransactions serializes optional filters and skips empty values', async () => {

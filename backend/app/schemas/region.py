@@ -13,3 +13,9 @@ class RegionResponse(BaseModel):
 
 class RegionSearchResponse(BaseModel):
     items: list[RegionResponse]
+
+
+class RegionHierarchyResponse(BaseModel):
+    sidos: list[str]
+    sigungus: list[str]
+    dongs: list[RegionResponse]
