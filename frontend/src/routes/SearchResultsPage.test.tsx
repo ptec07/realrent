@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getSummary } from '../api/summaries'
@@ -139,6 +139,18 @@ describe('SearchResultsPage', () => {
         sort: 'latest',
       })
     })
+  })
+
+  it('links back to the main screen from search results', async () => {
+    render(<SearchResultsPage />)
+    await screen.findByText('거래 7건')
+
+    const mainLink = screen.getByRole('link', { name: '메인화면' })
+    expect(mainLink).toHaveAttribute('href', '/')
+
+    fireEvent.click(mainLink)
+
+    expect(window.location.pathname).toBe('/')
   })
 
   it('passes the selected dong to every results API request', async () => {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type MouseEvent } from 'react'
 
 import { getSummary, type SummaryResponse } from '../api/summaries'
 import { getTransactions, type HousingType, type RentType, type TransactionListResponse, type TransactionQueryParams } from '../api/transactions'
@@ -62,6 +62,11 @@ async function getAllTransactions(params: TransactionQueryParams): Promise<Trans
     ...firstPage,
     items: [firstPage.items, ...remainingPages.map((page) => page.items)].flat(),
   }
+}
+
+function handleMainLinkClick(event: MouseEvent<HTMLAnchorElement>) {
+  event.preventDefault()
+  navigateTo('/')
 }
 
 function buildCompareUrl(filters: ResultFilters) {
@@ -131,6 +136,9 @@ export default function SearchResultsPage() {
     <main className="app-shell results-shell">
       <section className="results-page">
         <p className="eyebrow">RealRent MVP</p>
+        <a className="secondary-link main-screen-link" href="/" onClick={handleMainLinkClick}>
+          메인화면
+        </a>
         <h1>검색 결과</h1>
         <p className="lead">
           {filters.q || filters.regionCode5 || '선택한 지역'}의 {isSale ? '매매' : '전월세'} 실거래 요약입니다.
